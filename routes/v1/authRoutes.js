@@ -10,7 +10,7 @@ router.post('/register', registerUser); // POST /api/auth/register
 router.post('/login', loginUser);   // POST /api/auth/login
 router.get('/testauth', authenticateMiddleware, authorizeMiddleware('admin'), testAuth); //AUTHORIZE ADMIN
 router.get('/logout',authenticateMiddleware, logoutUser);
-router.get('/me',authenticateMiddleware, meGet);
+router.get('/me', authenticateMiddleware, meGet);
 router.put('/me', authenticateMiddleware, authorizeMiddleware('admin'), mePut);   //BUSCAR LA MANERA DE DEVOLVER EL ENUM 
 
 module.exports = router;

@@ -148,7 +148,7 @@ const mePut = async(req, res) => {
             token,
             user: { id: id, name, email, role }
         })
-
+        
     } catch (error) {
         console.error("Error al registrar usuario:", error);
         res.status(500).json({ message: "Error interno del servidor al actualizar." });
