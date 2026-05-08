@@ -13,13 +13,9 @@ const authorizeMiddleware = (requiredRole) => {
                 message: "Acceso denegado. Rol insuficiente." 
             });
         }else{
-            console.log(req.user);
-            return res.status(201).json({
-                message: "Role correcto"
-            });
+            next(); // Si el rol es correcto, permite el paso.
         }
         
-        next(); // Si el rol es correcto, permite el paso.
     };
 };
 

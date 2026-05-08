@@ -28,7 +28,8 @@ app.use(cors());
 // 🛣️ ROUTES (API Endpoints)
 // =================================================================
 
-const authRoutes = require('./routes/authRoutes');
+
+const authRoutes = require('./routes/v1/authRoutes');
 app.use('/api/auth',authRoutes);
 
 /**
