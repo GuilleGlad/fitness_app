@@ -1,6 +1,6 @@
 // --- middlewares/roleMiddleware.js ---
 
-const authorizeMiddleware = (requiredRole) => {
+const authorizeMiddleware = (...requiredRoles) => {
     // Devuelve una función que recibirá los parámetros de la petición
     return (req, res, next) => {
         // Asume que el middleware de autenticación ya adjuntó el usuario
@@ -8,7 +8,7 @@ const authorizeMiddleware = (requiredRole) => {
             return res.status(401).json({ message: "Usuario no identificado." });
         }
 
-        if (req.user.role !== requiredRole) {
+        if (requiredRoles.indexOf(req.user.role) == -1) {
             return res.status(403).json({ 
                 message: "Acceso denegado. Rol insuficiente." 
             });

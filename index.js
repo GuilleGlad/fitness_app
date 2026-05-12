@@ -31,6 +31,8 @@ app.use(cors());
 
 const authRoutes = require('./routes/v1/authRoutes');
 app.use('/api/auth',authRoutes);
+const plansRoutes = require('./routes/v1/plansRoutes');
+app.use('/api/plans',plansRoutes);
 
 /**
  * Root route handler (GET /)
