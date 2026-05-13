@@ -7,7 +7,7 @@ const { registerUser, loginUser, testAuth, logoutUser, meGet, mePut } = require(
 
 // Endpoints
 router.get('/testauth', authenticateMiddleware, authorizeMiddleware('admin','trainer'), testAuth); //AUTHORIZE ADMIN
-//AUTH
+//AUTH - /auth
 router.post('/register', registerUser); // POST /api/auth/register
 router.post('/login', loginUser);   // POST /api/auth/login
 router.get('/logout',authenticateMiddleware, logoutUser);

@@ -33,6 +33,8 @@ const authRoutes = require('./routes/v1/authRoutes');
 app.use('/api/auth',authRoutes);
 const plansRoutes = require('./routes/v1/plansRoutes');
 app.use('/api/plans',plansRoutes);
+const exercisesRoutes = require('./routes/v1/exercisesRoutes');
+app.use('/api/exercises', exercisesRoutes);
 
 /**
  * Root route handler (GET /)

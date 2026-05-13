@@ -90,8 +90,16 @@ const getMyPlans = async(req,res) => {
     }
 }
 
+const assignPlan = async (req, res) => {
+    const {id, client_id} = req.body;
+    if(!id || !client_id){
+         return res.status(400).json({ message: "Todos los campos son requeridos." });
+    }
+    console.log(id, client_id);
+}
 module.exports = {
     addPlans,
     getPlan,
-    getMyPlans
+    getMyPlans,
+    assignPlan
 }
