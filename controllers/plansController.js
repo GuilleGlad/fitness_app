@@ -4,17 +4,43 @@ const pool = require('../config/db');
 
 const addPlans = async (req, res) => {
     const { client_id, day_of_week, trainer_notes } = req.body;
-    if (!client_id || !day_of_week || !trainer_notes) {
+    if (!day_of_week || !trainer_notes) {
         return res.status(400).json({ message: "Todos los campos son requeridos." });
     }
     try {
-        const [result] = await pool.execute("INSERT INTO daily_workouts (client_id, day_of_week, trainer_notes) VALUES (?,?,?)", [client_id, day_of_week, trainer_notes]);
+        let cid;
+        if(!client_id){
+            cid = null;
+        }else{
+            cid = client_id;
+        }
+        const [result] = await pool.execute("INSERT INTO daily_workouts (client_id, day_of_week, trainer_notes) VALUES (?,?,?)", [cid, day_of_week, trainer_notes]);
         const insert_id = result.insertId;
         return res.status(201).json({
             message: "Registro Creado",
             insert_id: insert_id
         });
     } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message,
+        });
+    }
+}
+
+const addWorkoutItems = async (req,res) => {
+    const { workout_items} = req.body;
+    if (!workout_items) {
+        return res.status(400).json({ message: "Todos los campos son requeridos." });
+    }
+    try{
+        const sql = "INSERT INTO workout_items (workout_id, exercise_id, sets, reps_text, client_effort_notes) VALUES ?";
+        pool.query(sql, workout_items, (err, result) => {
+            if (err) throw err;
+            return res.status(201).json({
+                message: "Number of records inserted: " + result.affectedRows 
+            });
+        })
+    }catch(error){
         return res.status(500).json({
             message: "Error: " + error.message,
         });
@@ -95,11 +121,22 @@ const assignPlan = async (req, res) => {
     if(!id || !client_id){
          return res.status(400).json({ message: "Todos los campos son requeridos." });
     }
-    console.log(id, client_id);
+    try{
+        await pool.execute("UPDATE daily_workouts SET client_id = ? WHERE id = ?", [client_id, id]);
+        return res.status(201).json({
+            message: "Registro Actualizado",
+        });
+    }catch(error){
+        return res.status(500).json({
+            message: "Error: " + error.message,
+        });
+    }
+
 }
 module.exports = {
     addPlans,
     getPlan,
     getMyPlans,
-    assignPlan
+    assignPlan,
+    addWorkoutItems
 }
