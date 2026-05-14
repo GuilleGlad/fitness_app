@@ -35,6 +35,8 @@ const plansRoutes = require('./routes/v1/plansRoutes');
 app.use('/api/plans',plansRoutes);
 const exercisesRoutes = require('./routes/v1/exercisesRoutes');
 app.use('/api/exercises', exercisesRoutes);
+const progressRoutes = require('./routes/v1/progressRoutes');
+app.use('/api/progress', progressRoutes);
 
 /**
  * Root route handler (GET /)
