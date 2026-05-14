@@ -37,6 +37,10 @@ const exercisesRoutes = require('./routes/v1/exercisesRoutes');
 app.use('/api/exercises', exercisesRoutes);
 const progressRoutes = require('./routes/v1/progressRoutes');
 app.use('/api/progress', progressRoutes);
+const recipesRoutes = require('./routes/v1/recipesRoutes');
+app.use('/api/recipes', recipesRoutes);
+const dietsRoutes = require('./routes/v1/dietsRoutes');
+app.use('/api/diets',dietsRoutes);
 
 /**
  * Root route handler (GET /)
