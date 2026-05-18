@@ -41,6 +41,8 @@ const recipesRoutes = require('./routes/v1/recipesRoutes');
 app.use('/api/recipes', recipesRoutes);
 const dietsRoutes = require('./routes/v1/dietsRoutes');
 app.use('/api/diets',dietsRoutes);
+const adminRoutes = require('./routes/v1/adminRoutes');
+app.use('/api/admin', adminRoutes);
 
 /**
  * Root route handler (GET /)
