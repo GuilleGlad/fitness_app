@@ -3,9 +3,10 @@ const express = require('express');
 const router = express.Router();
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
-const { registerUser, loginUser, testAuth, logoutUser, meGet, mePut } = require('../../controllers/authController');
+const { registerUser, loginUser, testAuth, logoutUser, meGet, mePut} = require('../../controllers/authController');
 
 // Endpoints
+
 router.get('/testauth', authenticateMiddleware, authorizeMiddleware('admin','trainer'), testAuth); //AUTHORIZE ADMIN
 //AUTH - /auth
 router.post('/register', registerUser); // POST /api/auth/register

@@ -95,6 +95,14 @@ app.post('/api/submit', (req, res) => {
     });
 });
 
+app.get('/api/testApi', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message:"Conexión con la API funcionando correctamente.",
+        code:200
+    })
+})
+
 
 // =================================================================
 // 🚀 START THE SERVER

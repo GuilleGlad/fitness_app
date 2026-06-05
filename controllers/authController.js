@@ -153,7 +153,6 @@ const mePut = async(req, res) => {
         console.error("Error al registrar usuario:", error);
         res.status(500).json({ message: "Error interno del servidor al actualizar." });
     }
-
 }
 
 module.exports = {
