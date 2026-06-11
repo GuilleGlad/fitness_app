@@ -1,7 +1,8 @@
 // 1. Import the express module, cors and dotenv
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv')
+const dotenv = require('dotenv');
+const path = require('path');
 
 // Cargar variables de entorno (asegúrate de que sea el primer archivo)
 dotenv.config();
@@ -19,6 +20,7 @@ const PORT = process.env.PORT || 3000;
 // This is essential if your API endpoints receive JSON data (e.g., in a POST request).
 app.use(express.json());
 app.use(cors());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Optional: Use body-parser for URL-encoded data if needed (less common in modern Express apps)
 // app.use(express.urlencoded({ extended: true }));
