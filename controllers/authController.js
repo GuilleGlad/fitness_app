@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const registerUser = async (req, res) => {
-    const { name, email, password, role } = req.body;
-    if (!name || !email || !password || !role) {
+    const { name, email, password, role, genre} = req.body;
+    if (!name || !email || !password || !role || !genre) {
         return res.status(400).json({ message: "Todos los campos son requeridos." });
     }
     try {
@@ -12,7 +12,7 @@ const registerUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const [result] = await pool.execute(
-            'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', [name, email, hashedPassword, role]
+            'INSERT INTO users (name, email, password, role, genre) VALUES (?, ?, ?, ?, ?)', [name, email, hashedPassword, role, genre]
         );
 
         const userId = result.insertId;
@@ -22,16 +22,17 @@ const registerUser = async (req, res) => {
                 id: userId,
                 name: name,
                 email: email,
+                genre: genre,
                 role: role,                 
             },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '24h' }
         );
 
         res.status(201).json({
             message: "Registro Exitoso",
             token,
-            user: { id: userId, name, email, role }
+            user: { id: userId, name, email, role , genre}
         })
 
     } catch (error) {
