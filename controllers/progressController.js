@@ -3,11 +3,13 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const addProgress = async (req, res) => {
-    const { client_id, height, weight, waist, hips, arms, legs } = req.body;
-
+    const { client_id, height, weight, waist, hips, arms, legs, age, training_days, goal, trainerId } = req.body;
+    
     if (!client_id || !height || !weight || !waist || !hips || !arms || !legs) {
         return res.status(400).json({ message: "Faltan campos necesarios para el registro." });
     }
+    return res.status(200).json({ message: "Campos recibidos correctamente." });
+
     try {
         const photoFrontFile = req.files?.photo_front?.[0];
         const photoBackFile = req.files?.photo_back?.[0];
@@ -23,6 +25,9 @@ const addProgress = async (req, res) => {
         const [result] = await pool.execute("INSERT INTO progress_history (client_id, weight, waist, hips, arms, legs, photo_front_url, photo_back_url) VALUES (?,?,?,?,?,?,?,?)",[client_id, weight, waist, hips, arms, legs, photo_front, photo_back]);
         const insert_id = result.insertId;
 
+        const [result2] = await pool.execute("INSERT INTO client_profiles (user_id, trainer_id, age, height, initial_weight, training_days, goal, whatsapp_url) VALUES (?,?,?,?,?,?,?,?)",[client_id, trainerId, age, height, weight, training_days, goal, '']); 
+        const insert_id2 = result2.insertId;
+        
         return res.status(201).json({
             message:"Registro Creado",
             id: insert_id

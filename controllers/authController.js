@@ -3,16 +3,16 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const registerUser = async (req, res) => {
-    const { name, email, password, role, genre} = req.body;
+    const { name, email, password, role, genre, phone} = req.body;
     if (!name || !email || !password || !role || !genre) {
-        return res.status(400).json({ message: "Todos los campos son requeridos." });
+        return res.status(400).json({ message: "Faltan campos que son requeridos." });
     }
     try {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const [result] = await pool.execute(
-            'INSERT INTO users (name, email, password, role, genre) VALUES (?, ?, ?, ?, ?)', [name, email, hashedPassword, role, genre]
+            'INSERT INTO users (name, email, password, role, genre, phone) VALUES (?, ?, ?, ?, ?, ?)', [name, email, hashedPassword, role, genre, phone]
         );
 
         const userId = result.insertId;
@@ -23,6 +23,7 @@ const registerUser = async (req, res) => {
                 name: name,
                 email: email,
                 genre: genre,
+                phone: phone,
                 role: role,                 
             },
             process.env.JWT_SECRET,
