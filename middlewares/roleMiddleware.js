@@ -13,7 +13,12 @@ const authorizeMiddleware = (...requiredRoles) => {
         if (!req.user) {
             return res.status(401).json({ message: "Usuario no identificado." });
         }
-        const hasRole = Object.values(roles).includes(req.user.role);
+        let hasRole;
+        if(typeof req.user.role === 'number'){
+            hasRole = Object.values(roles).includes(req.user.role);
+        }else{
+            hasRole = requiredRoles.includes(req.user.role);
+        }
         if (!hasRole) {
             return res.status(403).json({ 
                 message: "Acceso denegado. Rol insuficiente." 

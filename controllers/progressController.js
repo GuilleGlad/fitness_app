@@ -8,7 +8,6 @@ const addProgress = async (req, res) => {
     if (!client_id || !height || !weight || !waist || !hips || !arms || !legs) {
         return res.status(400).json({ message: "Faltan campos necesarios para el registro." });
     }
-    return res.status(200).json({ message: "Campos recibidos correctamente." });
 
     try {
         const photoFrontFile = req.files?.photo_front?.[0];
@@ -27,10 +26,15 @@ const addProgress = async (req, res) => {
 
         const [result2] = await pool.execute("INSERT INTO client_profiles (user_id, trainer_id, age, height, initial_weight, training_days, goal, whatsapp_url) VALUES (?,?,?,?,?,?,?,?)",[client_id, trainerId, age, height, weight, training_days, goal, '']); 
         const insert_id2 = result2.insertId;
-        
+
+        const [result3] = await pool.execute("UPDATE users SET status = 1 WHERE id = ?", [client_id]);
+        const affectedRows = result3.affectedRows;
+
         return res.status(201).json({
             message:"Registro Creado",
-            id: insert_id
+            id: insert_id,
+            id2: insert_id2,
+            affectedRows: affectedRows
         })
     } catch (error) {
         return res.status(500).json({

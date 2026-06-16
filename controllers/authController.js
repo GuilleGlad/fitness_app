@@ -24,7 +24,8 @@ const registerUser = async (req, res) => {
                 email: email,
                 genre: genre,
                 phone: phone,
-                role: role,                 
+                role: role,          
+                status: 0,       
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
@@ -33,7 +34,7 @@ const registerUser = async (req, res) => {
         res.status(201).json({
             message: "Registro Exitoso",
             token,
-            user: { id: userId, name, email, role , genre}
+            user: { id: userId, name, email, role , genre, status: 0}
         })
 
     } catch (error) {
@@ -51,7 +52,7 @@ const loginUser = async (req, res) => {
 
     try { 
         const[rows] = await pool.execute(
-            'SELECT id, name, email, password, role, created_at FROM users WHERE email = ?',
+            'SELECT id, name, email, password, role, status, created_at FROM users WHERE email = ?',
             [email]
         );
         if(rows.length === 0){
@@ -73,6 +74,7 @@ const loginUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                status: user.status,
             },
             process.env.JWT_SECRET,
             {expiresIn: '1h'}
@@ -82,7 +84,7 @@ const loginUser = async (req, res) => {
             {
                 message: "Login Exitoso",
                 token,
-                user: {id: user.id, role: user.role, name: user.name}
+                user: {id: user.id, role: user.role, name: user.name, status: user.status}
             }
         )
     }catch(error){
@@ -116,6 +118,7 @@ const meGet = async(req, res) => {
             name: req.user.name,
             email: req.user.email,
             role: req.user.role,
+            status: req.user.status,
         }
     });
 }

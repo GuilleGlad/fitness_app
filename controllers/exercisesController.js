@@ -4,11 +4,19 @@ const pool = require('../config/db');
 
 const addExercise = async (req, res) => {
     const { trainer_id, title, description, photo_url, video_url} = req.body;
-    if (!trainer_id || !title || !description || !photo_url || !video_url) {
-        return res.status(400).json({ message: "Todos los campos son requeridos." });
+    let photoUrl = '';
+    let videoUrl = '';
+    if (!trainer_id || !title || !description) {
+        return res.status(400).json({ message: "Faltan campos requeridos." });
+    }
+    if(photo_url){
+        photoUrl = `${req.protocol}://${req.get('host')}/uploads/${photo_url}`;
+    }
+    if(video_url){
+        videoUrl = `${req.protocol}://${req.get('host')}/uploads/${video_url}`;
     }
     try {
-        const [result] = await pool.execute("INSERT INTO exercises (trainer_id, title, description, photo_url, video_url) VALUES (?,?,?,?,?)", [trainer_id, title, description, photo_url, video_url]);
+        const [result] = await pool.execute("INSERT INTO exercises (trainer_id, title, description, photo_url, video_url) VALUES (?,?,?,?,?)", [trainer_id, title, description, photoUrl, videoUrl]);
         const insert_id = result.insertId;
         return res.status(201).json({
             message: "Registro Creado",
@@ -67,9 +75,25 @@ const getExercise = async(req,res) => {
         })
     }
 }
+const getExercises = async(req,res) => {
+    const {trainerId} = req.params;
+    try{
+        const [rows] = await pool.execute("SELECT * FROM exercises WHERE trainer_id = ?", [trainerId]);
+        console.log(rows);
+        return res.status(200).json({
+            exercises: rows,
+        })
+
+    }catch(error){
+        return res.status(500).json({
+            message: "Error: " + error.message
+        })
+    }
+}
 
 module.exports = {
     addExercise,
     updateExercise,
-    getExercise
+    getExercise,
+    getExercises,
 }
