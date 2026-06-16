@@ -90,10 +90,24 @@ const getExercises = async(req,res) => {
         })
     }
 }
+const deleteExercise = async(req,res) => {
+    const {id} = req.params;
+    try{
+        await pool.execute("DELETE FROM exercises WHERE id = ?", [id]);
+        return res.status(200).json({
+            message: "Ejercicio eliminado correctamente",
+        });
+    }catch(error){
+        return res.status(500).json({
+            message: "Error: " + error.message
+        })
+    }
+}
 
 module.exports = {
     addExercise,
     updateExercise,
     getExercise,
     getExercises,
+    deleteExercise,
 }
