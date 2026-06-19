@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/library', express.static(path.join(__dirname, 'library')));
 
 // Optional: Use body-parser for URL-encoded data if needed (less common in modern Express apps)
 // app.use(express.urlencoded({ extended: true }));
@@ -45,7 +46,8 @@ const dietsRoutes = require('./routes/v1/dietsRoutes');
 app.use('/api/diets',dietsRoutes);
 const adminRoutes = require('./routes/v1/adminRoutes');
 app.use('/api/admin', adminRoutes);
-
+const libraryRoutes = require('./routes/v1/libraryRoutes');
+app.use('/api/library', libraryRoutes);
 /**
  * Root route handler (GET /)
  * This is the basic "landing page" endpoint.
