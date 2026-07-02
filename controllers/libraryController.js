@@ -1,5 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
 const pool = require('../config/db');
 
 const listLibrary = async (req, res) => {
@@ -35,9 +37,11 @@ const addLibrary = async (req, res) => {
             // const notes = "";
             try{
                 const [response] = await pool.execute("INSERT INTO library (filename, file_path,file_size,file_type,trainer_id) VALUES (?,?,?,?,?)",[filename, file_path, file_size, file_type, trainerId]);
+                const itemId = response.insertId;
                 return res.status(200).json({
                     data: response.data,
-                    message: "success"
+                    message: "success",
+                    itemId: itemId
                 })
             }catch(err){
                 return res.status(500).json({
@@ -50,13 +54,40 @@ const addLibrary = async (req, res) => {
   
 }
 
-// const deleteLibrary = async (req, res) => {
-//     const [id] = req.body;
-//     try{
-//         const [response] = await pool.execute("DELETE")
-//     }
-// }
+const deleteLibrary = async (req, res) => {
+    const {id} = req.params;
+    try{
+        const [rows] = await pool.execute("SELECT * FROM library WHERE id = ?", [id]);
+        const row = rows[0];
+
+        if (!row) {
+            return res.status(404).json({
+                message: "Registro no encontrado"
+            });
+        }
+
+        const filename = row.filename;
+        if (filename) {
+            const filePath = path.join(__dirname, '../library', filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+
+        await pool.execute("DELETE FROM library WHERE id = ?", [id]);
+
+        return res.status(200).json({
+            message: "success"
+        });
+    } catch(err) {
+        return res.status(500).json({
+            message: err.message
+        });
+    }
+}
+
 module.exports = {
     listLibrary,
     addLibrary,
+    deleteLibrary,
 }

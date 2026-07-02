@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
-const { listLibrary,addLibrary } = require('../../controllers/libraryController');
+const { listLibrary,addLibrary, deleteLibrary } = require('../../controllers/libraryController');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
@@ -25,4 +25,6 @@ router.get('/list/:trainerId', authenticateMiddleware, authorizeMiddleware('admi
 router.post('/add', authenticateMiddleware, authorizeMiddleware('admin', 'trainer'), upload.fields([
     { name: 'file', maxCount: 1 }
 ]), addLibrary)
+router.delete('/delete/:id', authenticateMiddleware, authorizeMiddleware('admin','trainer'), deleteLibrary);
+
 module.exports = router;

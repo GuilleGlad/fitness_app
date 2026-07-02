@@ -65,8 +65,43 @@ const getRecipe = async (req,res) => {
         })
     }
 }
+
+const updateRecipe = async (req, res) => {
+    const {id, trainer_id, title, ingredients, instructions, image_url, is_public} = req.body;
+    if (!trainer_id || !title || !ingredients || !instructions || !image_url || !is_public) {
+        return res.status(400).json({ message: "Todos los campos son requeridos." });
+    }
+    try {
+        await pool.execute("UPDATE recipes SET trainer_id = ?, title = ?, ingredients = ?, instructions = ?, image_url = ?, is_public = ? WHERE id = ?", [trainer_id, title, ingredients, instructions, image_url, is_public, id]);
+        return res.status(201).json({
+            message: "Registro Actualizado",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message,
+        });
+    }
+}
+
+const deleteRecipe = async(req,res) => {
+    const {recipeId} = req.params;
+    console.log(recipeId);
+    try{
+        await pool.execute("DELETE FROM recipes WHERE id = ?", [recipeId]);
+        return res.status(200).json({
+            message: "Receta eliminada correctamente",
+        });
+    }catch(error){
+        return res.status(500).json({
+            message: "Error: " + error.message
+        })
+    }
+}
+
 module.exports = {
     addRecipe,
     listRecipes,
-    getRecipe
+    getRecipe,
+    updateRecipe,
+    deleteRecipe
 }

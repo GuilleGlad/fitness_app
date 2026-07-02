@@ -106,8 +106,73 @@ const testAuth = async (req, res) => {
     )
 }
 
-const logoutUser = async (req, res) => {
+const refreshToken = async (req, res) => {
+    try {
+        const { id, name, email, role, status } = req.user;
 
+        const token = jwt.sign(
+            {
+                id,
+                name,
+                email,
+                role,
+                status,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        return res.status(200).json({
+            message: "Token refrescado correctamente",
+            token,
+            user: { id, name, email, role, status }
+        });
+    } catch (error) {
+        console.error("Error al refrescar el token:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor al refrescar el token"
+        });
+    }
+}
+const checkToken = async (req, res) => {
+    try{
+        const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({
+                    message: "Token inválido o expirado",
+                    error: err.message
+                });
+            }
+        });
+        return res.status(200).json({
+            message: "Token válido",
+            token,
+        });
+    }catch(error){
+        console.error("Error al verificar el token:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor al verificar el token"
+        });
+    }
+}
+const logoutUser = async (req, res) => {
+    try {
+        return res.status(200).json({
+            message: "Sesión cerrada correctamente",
+            user: {
+                id: req.user.id,
+                name: req.user.name,
+                email: req.user.email,
+                role: req.user.role,
+            }
+        });
+    } catch (error) {
+        console.error("Error al cerrar sesión:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor al cerrar sesión"
+        });
+    }
 }
 
 const meGet = async(req, res) => {
@@ -164,7 +229,9 @@ module.exports = {
     registerUser,
     loginUser,
     testAuth,
+    refreshToken,
     logoutUser,
     meGet,
     mePut,
+    checkToken
 }
