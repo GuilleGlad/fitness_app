@@ -48,6 +48,8 @@ const adminRoutes = require('./routes/v1/adminRoutes');
 app.use('/api/admin', adminRoutes);
 const libraryRoutes = require('./routes/v1/libraryRoutes');
 app.use('/api/library', libraryRoutes);
+const newsRoutes = require('./routes/v1/newsRoutes');
+app.use('/api/news', newsRoutes);
 /**
  * Root route handler (GET /)
  * This is the basic "landing page" endpoint.

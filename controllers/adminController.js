@@ -47,7 +47,65 @@ const getUser = async (req, res) => {
     }
 }
 
+const setSettings = async (req, res) => {
+    const { title, logo, gallery, ads , video, about} = req.body;
+
+    try{
+        await pool.execute("INSERT INTO settings (title,logo, gallery, ads, video_background, about) VALUES (?,?,?,?,?,?)", [title,logo, gallery, ads, video, about]);
+        return res.status(200).json({
+            message: "Configuración guardada"
+        });
+
+    }catch(error){
+        return res.status(500).json({
+            message:"Error, " + error.message
+        })
+    }
+}
+
+const getSettings = async (req, res) => {
+    try{
+        const [result] = await pool.execute("SELECT * FROM settings ORDER BY updated_at DESC LIMIT 1");
+        return res.status(200).json({
+            message: "Configuración",
+            result: result
+        });
+    }catch(error){
+        return res.status(500).json({
+            message:"Error, " + error.message
+        })
+    }
+}
+
+const getCounts = async (req, res) => {
+    try{
+        const [clientsCount, trainersCount, newsCount, recipesCount, adsCount] = await Promise.all([
+            pool.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'client' AND status = 1"),
+            pool.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'trainer' AND status = 1"),
+            pool.execute("SELECT COUNT(*) AS count FROM news WHERE status = 1"),
+            pool.execute("SELECT COUNT(*) AS count FROM recipes WHERE is_public = 1"),
+            pool.execute("SELECT CASE WHEN TRIM(COALESCE(ads, '')) = '' THEN 0 ELSE 1 + CHAR_LENGTH(ads) - CHAR_LENGTH(REPLACE(ads, ',', '')) END AS total_ads FROM settings ORDER BY updated_at DESC LIMIT 1;")            
+        ]); 
+        return res.status(200).json({
+            message: "Conteos",
+            counts: {
+                clients: clientsCount[0][0].count,
+                trainers: trainersCount[0][0].count,
+                news: newsCount[0][0].count,
+                recipes: recipesCount[0][0].count,
+                ads: adsCount[0][0].total_ads
+            }
+        });
+    }catch(error){
+        return res.status(500).json({
+            message:"Error, " + error.message
+        })
+    }
+}
 module.exports = {
     getUsers,
-    getUser
+    getUser,
+    setSettings,
+    getSettings,
+    getCounts
 }
