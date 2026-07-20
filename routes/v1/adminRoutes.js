@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
-const { getUsers, getUser, setSettings, getSettings, getCounts } = require('../../controllers/adminController');
+const { getUsers, getUser, setSettings, getSettings, getCounts, getClients, getTrainers } = require('../../controllers/adminController');
 
 // Endpoints
 //AUTH - /admin
@@ -12,6 +12,8 @@ router.get('/user/:id', authenticateMiddleware, authorizeMiddleware('admin'), ge
 router.post('/settings', authenticateMiddleware, authorizeMiddleware('admin'), setSettings);
 router.get('/settings', getSettings);
 router.get('/counts', authenticateMiddleware, authorizeMiddleware('admin'), getCounts);
+router.get('/clients', authenticateMiddleware, authorizeMiddleware('admin','trainer'), getClients);
+router.get('/trainers', authenticateMiddleware, authorizeMiddleware('admin'), getTrainers);
 module.exports = router;
 
 

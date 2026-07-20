@@ -34,9 +34,14 @@ const listRecipes = async (req,res) => {
     })
     const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
     const client_id = token_json.id;
-    console.log(client_id);
+    // console.log(client_id);
     try{
-        [rows] = await pool.execute("SELECT * FROM recipes WHERE trainer_id = ?",[client_id])
+        var rows = [];
+        if(token_json.role == "admin"){
+            [rows] = await pool.execute("SELECT * FROM recipes");
+        }else{
+            [rows] = await pool.execute("SELECT * FROM recipes WHERE trainer_id = ?",[client_id]);
+        }
         return res.status(200).json({
             message:"Recetas",
             filas: rows
