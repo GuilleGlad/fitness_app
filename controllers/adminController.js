@@ -119,10 +119,11 @@ const getClients = async (req, res) =>{
         const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
         const client_id = token_json.id;
         const role = token_json.role;
+        console.log(role);
         if(role !== 'admin'){
-            [rows] = await pool.execute("SELECT * FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ?",[client_id]);
+            [rows] = await pool.execute("SELECT * FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? AND users.status = 1",[client_id]);
         }else{
-            [rows] = await pool.execute("SELECT * FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id");
+            [rows] = await pool.execute("SELECT * FROM users LEFT JOIN client_profiles ON client_profiles.user_id = users.id ",[client_id]);
         }
         return res.status(200).json({
             message: "Listado de Clientes",
@@ -153,6 +154,57 @@ const getTrainers = async(req, res) => {
         })
     }
 }
+
+const deleteUser = async(req, res) => {
+    try{
+        const {id} = req.params;
+        await pool.execute("UPDATE users SET status = 0, deleted = 1 WHERE id = ?",[id]);
+        return res.status(200).json({
+            message: "Usuario Eliminado",
+        });
+    }catch(error){
+        res.status(500).json({
+            message: "Error no se puedo Eliminar el Usuario",
+            error: error.message
+        });
+    }
+}
+
+const updateUser = async(req, res) => {
+    try{
+        const {id} = req.params;
+        if(!id){
+            return res.status(500).json({
+                message: "Falta el Id del Usuario",
+            });
+        }
+        const {email, genre, name, password, phone, picture} = req.body;
+        await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ? WHERE id = ?",[email, genre, name, password, phone, picture, id]);
+        return res.status(200).json({
+            message: "Usuario Actualizado",
+        });
+    }catch(error){
+        return res.status(500).json({
+            message: "Error no se pudo Actualizar el Usuario",
+            error: error.message
+        })
+    }
+}
+
+const restoreUser = async(req, res) => {
+    try{
+        const {id} = req.params;
+        await pool.execute("UPDATE users SET status = 0, deleted = 0 WHERE id = ?",[id]);
+        return res.status(200).json({
+            message: "Usuario Restaurado",
+        });
+    }catch(error){
+        res.status(500).json({
+            message: "Error no se puedo Restaurar el Usuario",
+            error: error.message
+        });
+    }    
+}
 module.exports = {
     getUsers,
     getUser,
@@ -160,5 +212,8 @@ module.exports = {
     getSettings,
     getCounts,
     getClients,
-    getTrainers
+    getTrainers,
+    deleteUser,
+    updateUser,
+    restoreUser
 }
