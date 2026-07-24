@@ -178,8 +178,13 @@ const updateUser = async(req, res) => {
                 message: "Falta el Id del Usuario",
             });
         }
-        const {email, genre, name, password, phone, picture} = req.body;
-        await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ? WHERE id = ?",[email, genre, name, password, phone, picture, id]);
+        const {email, genre, name, password, phone, role, picture = '/images/avatar.png'} = req.body;
+        if(role != null){
+            await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ?, role = ? WHERE id = ?",[email, genre, name, password, phone, picture, role, id]);
+        }else{
+            await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ? WHERE id = ?",[email, genre, name, password, phone, picture, id]);
+        } 
+        
         return res.status(200).json({
             message: "Usuario Actualizado",
         });
@@ -205,6 +210,8 @@ const restoreUser = async(req, res) => {
         });
     }    
 }
+
+
 module.exports = {
     getUsers,
     getUser,
