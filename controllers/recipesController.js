@@ -3,10 +3,11 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const addRecipe = async (req, res) => {
-    const { trainer_id, title, ingredients, instructions, image_url, is_public  } = req.body;
-    if (!trainer_id || !title || !ingredients || !instructions || !image_url || !is_public) {
+    const { trainer_id, title, ingredients, instructions, image_url, is_public = 1 } = req.body;
+    if (!trainer_id || !title || !ingredients || !instructions || !image_url) {
         return res.status(400).json({ message: "Faltan campos necesarios para el registro." });
     }
+
     try {
         const [result] = await pool.execute("INSERT INTO recipes (trainer_id, title, ingredients, instructions, image_url, is_public) VALUES (?,?,?,?,?,?)",[trainer_id, title, ingredients, instructions, image_url, is_public]);
         insert_id = result.insert_id;
@@ -38,10 +39,24 @@ const listRecipes = async (req,res) => {
     try{
         var rows = [];
         if(token_json.role == "admin"){
-            [rows] = await pool.execute("SELECT * FROM recipes");
+            [rows] = await pool.execute("SELECT * FROM recipes where status = 1");
         }else{
-            [rows] = await pool.execute("SELECT * FROM recipes WHERE trainer_id = ?",[client_id]);
+            [rows] = await pool.execute("SELECT * FROM recipes WHERE trainer_id = ? AND status = 1",[client_id]);
         }
+        return res.status(200).json({
+            message:"Recetas",
+            filas: rows
+        })
+    }catch(error){
+        return res.status(500).json({
+            message: "Error: " + error.message
+        })
+    }
+}
+
+const listPublicRecipes = async (req,res) => {
+    try{
+        const [rows] = await pool.execute("SELECT * FROM recipes WHERE is_public = 1 AND status = 1");
         return res.status(200).json({
             message:"Recetas",
             filas: rows
@@ -72,10 +87,11 @@ const getRecipe = async (req,res) => {
 }
 
 const updateRecipe = async (req, res) => {
-    const {id, trainer_id, title, ingredients, instructions, image_url, is_public} = req.body;
-    if (!trainer_id || !title || !ingredients || !instructions || !image_url || !is_public) {
+    const {id, trainer_id, title, ingredients, instructions, image_url, is_public = 1} = req.body;
+    if (!trainer_id || !title || !ingredients || !instructions || !image_url) {
         return res.status(400).json({ message: "Todos los campos son requeridos." });
     }
+    
     try {
         await pool.execute("UPDATE recipes SET trainer_id = ?, title = ?, ingredients = ?, instructions = ?, image_url = ?, is_public = ? WHERE id = ?", [trainer_id, title, ingredients, instructions, image_url, is_public, id]);
         return res.status(201).json({
@@ -108,5 +124,6 @@ module.exports = {
     listRecipes,
     getRecipe,
     updateRecipe,
-    deleteRecipe
+    deleteRecipe,
+    listPublicRecipes
 }
