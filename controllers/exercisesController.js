@@ -105,6 +105,21 @@ const getExercises = async(req,res) => {
         })
     }
 }
+
+const listPublicExercises = async(req,res) => {
+    try{
+        const [rows] = await pool.execute("SELECT * FROM exercises WHERE publico = 1");
+        return res.status(200).json({
+            exercises: rows,
+        })
+
+    }catch(error){
+        return res.status(500).json({
+            message: "Error: " + error.message
+        })
+    }
+}
+
 const deleteExercise = async(req,res) => {
     const {id} = req.params;
     try{
@@ -125,4 +140,5 @@ module.exports = {
     getExercise,
     getExercises,
     deleteExercise,
+    listPublicExercises
 }
