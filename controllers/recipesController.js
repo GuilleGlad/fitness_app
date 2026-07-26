@@ -1,16 +1,20 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const { cleanURL } = require('../lib/utils');
 
 const addRecipe = async (req, res) => {
     const { trainer_id, title, ingredients, instructions, image_url, is_public = 1 } = req.body;
+    var imageURL = '';
     if (!trainer_id || !title || !ingredients || !instructions || !image_url) {
         return res.status(400).json({ message: "Faltan campos necesarios para el registro." });
     }
-
+    if(image_url){
+        imageURL = cleanURL(image_url);
+    }
     try {
-        const [result] = await pool.execute("INSERT INTO recipes (trainer_id, title, ingredients, instructions, image_url, is_public) VALUES (?,?,?,?,?,?)",[trainer_id, title, ingredients, instructions, image_url, is_public]);
-        insert_id = result.insert_id;
+        const [result] = await pool.execute("INSERT INTO recipes (trainer_id, title, ingredients, instructions, image_url, is_public) VALUES (?,?,?,?,?,?)",[trainer_id, title, ingredients, instructions, imageURL, is_public]);
+        insert_id = result.insertId;
 
         return res.status(201).json({
             message:"Registro Creado",
@@ -88,12 +92,15 @@ const getRecipe = async (req,res) => {
 
 const updateRecipe = async (req, res) => {
     const {id, trainer_id, title, ingredients, instructions, image_url, is_public = 1} = req.body;
+    var imageURL = '';
     if (!trainer_id || !title || !ingredients || !instructions || !image_url) {
         return res.status(400).json({ message: "Todos los campos son requeridos." });
     }
-    
+    if(image_url){
+        imageURL = cleanURL(image_url);
+    }    
     try {
-        await pool.execute("UPDATE recipes SET trainer_id = ?, title = ?, ingredients = ?, instructions = ?, image_url = ?, is_public = ? WHERE id = ?", [trainer_id, title, ingredients, instructions, image_url, is_public, id]);
+        await pool.execute("UPDATE recipes SET trainer_id = ?, title = ?, ingredients = ?, instructions = ?, image_url = ?, is_public = ? WHERE id = ?", [trainer_id, title, ingredients, instructions, imageURL, is_public, id]);
         return res.status(201).json({
             message: "Registro Actualizado",
         });

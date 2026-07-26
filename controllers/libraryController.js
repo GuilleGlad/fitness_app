@@ -41,7 +41,8 @@ const addLibrary = async (req, res) => {
                 return res.status(200).json({
                     data: response.data,
                     message: "success",
-                    itemId: itemId
+                    itemId: itemId,
+                    url: file_path
                 })
             }catch(err){
                 return res.status(500).json({

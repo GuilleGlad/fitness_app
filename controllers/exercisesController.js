@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const { cleanURL } = require('../lib/utils');
 
 const addExercise = async (req, res) => {
     const { trainer_id, title, description, photo_url, video_url, publico} = req.body;
@@ -10,10 +11,10 @@ const addExercise = async (req, res) => {
         return res.status(400).json({ message: "Faltan campos requeridos." });
     }
     if(photo_url){
-        photoUrl = cleanURL(`${req.protocol}://${req.get('host')}/uploads/${photo_url}`);
+        photoUrl = cleanURL(photo_url);
     }
     if(video_url){
-        videoUrl = cleanURL(`${req.protocol}://${req.get('host')}/uploads/${video_url}`);
+        videoUrl = cleanURL(video_url);
     }
     try {
         const [result] = await pool.execute("INSERT INTO exercises (trainer_id, title, description, photo_url, video_url, publico) VALUES (?,?,?,?,?,?)", [trainer_id, title, description, photoUrl, videoUrl, publico]);
@@ -116,10 +117,6 @@ const deleteExercise = async(req,res) => {
             message: "Error: " + error.message
         })
     }
-}
-
-const cleanURL = (url) => {
-    return url.replaceAll("blob:");
 }
 
 module.exports = {
