@@ -10,7 +10,7 @@ router.post('/add', authenticateMiddleware, authorizeMiddleware('admin','trainer
 router.put('/update/:id',authenticateMiddleware, authorizeMiddleware('admin', 'trainer'), updateExercise);
 router.get('/get/:id', authenticateMiddleware, getExercise);
 router.get('/list/:trainerId', authenticateMiddleware, getExercises);
-router.get('/list', listPublicExercises);
+router.get('/list-public', listPublicExercises);
 router.delete('/delete/:id', authenticateMiddleware, deleteExercise);
 
 module.exports = router;
