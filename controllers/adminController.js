@@ -48,10 +48,10 @@ const getUser = async (req, res) => {
 }
 
 const setSettings = async (req, res) => {
-    const { title, logo, gallery, ads , video, about} = req.body;
+    const { title, logo, gallery, ads , video, about, username, phone, email, address} = req.body;
 
     try{
-        await pool.execute("INSERT INTO settings (title,logo, gallery, ads, video_background, about) VALUES (?,?,?,?,?,?)", [title,logo, gallery, ads, video, about]);
+        await pool.execute("INSERT INTO settings (title,logo, gallery, ads, video_background, about, username, phone, email, address) VALUES (?,?,?,?,?,?,?,?,?,?)", [title,logo, gallery, ads, video, about, username, phone, email, address]);
         return res.status(200).json({
             message: "Configuración guardada"
         });
