@@ -52,7 +52,7 @@ const loginUser = async (req, res) => {
 
     try { 
         const[rows] = await pool.execute(
-            'SELECT id, name, email, password, role, status, created_at FROM users WHERE email = ?',
+            'SELECT id, name, email, password, role, status, genre, created_at FROM users WHERE email = ?',
             [email]
         );
         if(rows.length === 0){
@@ -84,7 +84,7 @@ const loginUser = async (req, res) => {
             {
                 message: "Login Exitoso",
                 token,
-                user: {id: user.id, role: user.role, name: user.name, status: user.status}
+                user: {id: user.id, role: user.role, name: user.name, status: user.status, genre: user.genre}
             }
         )
     }catch(error){
@@ -184,6 +184,7 @@ const meGet = async(req, res) => {
             email: req.user.email,
             role: req.user.role,
             status: req.user.status,
+            genre: req.user.genre,
         }
     });
 }
