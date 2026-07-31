@@ -123,7 +123,7 @@ const getClients = async (req, res) =>{
         if(role !== 'admin'){
             [rows] = await pool.execute("SELECT * FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? AND users.status = 1",[client_id]);
         }else{
-            [rows] = await pool.execute("SELECT * FROM users LEFT JOIN client_profiles ON client_profiles.user_id = users.id ",[client_id]);
+            [rows] = await pool.execute("SELECT * FROM users LEFT JOIN client_profiles ON client_profiles.user_id = ? ",[client_id]);
         }
         return res.status(200).json({
             message: "Listado de Clientes",

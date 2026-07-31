@@ -15,7 +15,7 @@ router.put('/user/:id', authenticateMiddleware, authorizeMiddleware('admin'), up
 router.post('/settings', authenticateMiddleware, authorizeMiddleware('admin'), setSettings);
 router.get('/settings', getSettings);
 router.get('/counts', authenticateMiddleware, authorizeMiddleware('admin'), getCounts);
-router.get('/clients', authenticateMiddleware, authorizeMiddleware('admin','trainer'), getClients);
+router.get('/clients', authenticateMiddleware, authorizeMiddleware('admin','trainer','client'), getClients);
 router.get('/trainers', authenticateMiddleware, getTrainers);
 
 module.exports = router;

@@ -85,8 +85,40 @@ const getProgress = async (req,res) => {
         })
     }
 }
+
+const getProfile = async (req, res) =>{
+    try{
+        const SecretToken = process.env.TOKEN_SECRET;
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        if (token == null) 
+            return res.status(401).send({msg : 'No ha ingresado un token'})
+        jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+            if (err){
+                return  
+                res.status(403).send({msg : 'Token invalido'})
+            }
+        })
+        const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
+        const client_id = token_json.id;
+        const role = token_json.role;
+        [rows] = await pool.execute("SELECT * FROM client_profiles WHERE user_id = ? LIMIT 1",[client_id]);
+        return res.status(200).json({
+            message: "Perfil del Cliente",
+            profile: rows,
+        });
+
+    }catch(error){
+        res.status(500).json({
+            message: "Error",
+            error: error.message
+        })
+    }
+}
+
 module.exports = {
     addProgress,
     listProgress,
-    getProgress
+    getProgress,
+    getProfile
 }
