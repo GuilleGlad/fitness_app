@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const addProgress = async (req, res) => {
-    const { client_id, height, weight, waist, hips, arms, legs, age, training_days, goal, trainerId } = req.body;
+    const { client_id, height, weight, waist, hips, arms, legs, age, training_days, goal, trainerId  } = req.body;
     
     if (!client_id || !height || !weight || !waist || !hips || !arms || !legs) {
         return res.status(400).json({ message: "Faltan campos necesarios para el registro." });
@@ -37,9 +37,8 @@ const addProgress = async (req, res) => {
             affectedRows: affectedRows
         })
     } catch (error) {
-        return res.status(500).json({
-            message: "Error: " + error.id,
-        });
+        console.error('RAW ERROR:', error);
+        res.status(500).json({ message: error.message || JSON.stringify(error) });
     }
 }
 const listProgress = async (req,res) => {
