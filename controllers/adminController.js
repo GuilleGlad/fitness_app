@@ -119,7 +119,7 @@ const getClients = async (req, res) =>{
         const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
         const client_id = token_json.id;
         const role = token_json.role;
-        console.log(role);
+        // console.log(role);
         if(role !== 'admin'){
             [rows] = await pool.execute("SELECT * FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? AND users.status = 1",[client_id]);
         }else{

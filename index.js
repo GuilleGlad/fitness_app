@@ -50,6 +50,8 @@ const libraryRoutes = require('./routes/v1/libraryRoutes');
 app.use('/api/library', libraryRoutes);
 const newsRoutes = require('./routes/v1/newsRoutes');
 app.use('/api/news', newsRoutes);
+const workoutsRoutes = require('./routes/v1/workoutsRoutes');
+app.use('/api/workouts', workoutsRoutes);
 /**
  * Root route handler (GET /)
  * This is the basic "landing page" endpoint.
