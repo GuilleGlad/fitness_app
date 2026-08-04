@@ -91,7 +91,7 @@ const listByClient = async (req, res) => {
         return res.status(400).json({ message: "ID del cliente es necesario." });
     }
     try {
-        const [rows] = await pool.execute("SELECT * FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id WHERE daily_workouts.client_id = ? ORDER BY daily_workouts.id DESC", [client_id]);
+        const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, users.id as user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id WHERE daily_workouts.client_id = ? ORDER BY daily_workouts.id DESC", [client_id]);
         return res.status(200).json({
             message: "Lista de Entrenamientos",
             filas: rows
