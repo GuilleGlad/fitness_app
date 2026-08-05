@@ -91,7 +91,7 @@ const listByClient = async (req, res) => {
         return res.status(400).json({ message: "ID del cliente es necesario." });
     }
     try {
-        const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, users.id as user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id WHERE daily_workouts.client_id = ? ORDER BY daily_workouts.id DESC", [client_id]);
+        const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, users.id as user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title, workout_note.note FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id LEFT JOIN workout_note ON workout_note.client_id = users.id AND workout_note.daily_workouts_id = daily_workouts.id AND DATE(workout_note.log_date) = DATE(daily_workouts.log_date) WHERE daily_workouts.client_id = ? ORDER BY daily_workouts.id DESC", [client_id]);
         return res.status(200).json({
             message: "Lista de Entrenamientos",
             filas: rows
@@ -167,6 +167,80 @@ const updateDailyWorkout = async (req, res) => {
     }   
 }
 
+const addNoteToWorkout = async (req, res) => {
+    const { client_id, daily_workouts_id, log_date, note } = req.body;
+    
+    if (!client_id || !daily_workouts_id || !log_date || !note) {
+        return res.status(400).json({ message: "Faltan campos requeridos: client_id, daily_workouts_id, log_date, note" });
+    }
+    
+    try {
+        // Verificar si ya existe un registro con los mismos client_id, daily_workouts_id y log_date
+        const [existing] = await pool.execute(
+            "SELECT id FROM workout_note WHERE client_id = ? AND daily_workouts_id = ?",
+            [client_id, daily_workouts_id]
+        );
+        
+        if (existing.length > 0) {
+            // Actualizar el registro existente
+            const [result] = await pool.execute(
+                "UPDATE workout_note SET note = ? WHERE client_id = ? AND daily_workouts_id = ? ",
+                [note, client_id, daily_workouts_id]
+            );
+            
+            return res.status(200).json({
+                message: "Nota actualizada correctamente",
+                updated: true,
+                affectedRows: result.affectedRows
+            });
+        } else {
+            // Insertar nuevo registro
+            const [result] = await pool.execute(
+                "INSERT INTO workout_note (note, daily_workouts_id, client_id, log_date) VALUES (?, ?, ?, ?)",
+                [note, daily_workouts_id, client_id, log_date]
+            );
+            
+            return res.status(201).json({
+                message: "Nota creada correctamente",
+                created: true,
+                insert_id: result.insertId
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message,
+        });
+    }
+}
+
+const getWorkoutNote = async (req, res) => {
+    const { client_id, daily_workouts_id, log_date } = req.query;
+    
+    if (!client_id || !daily_workouts_id || !log_date) {
+        return res.status(400).json({ message: "Faltan parámetros requeridos: client_id, daily_workouts_id, log_date" });
+    }
+    
+    try {
+        const [rows] = await pool.execute(
+            "SELECT id, note, daily_workouts_id, client_id, log_date FROM workout_note WHERE client_id = ? AND daily_workouts_id = ? AND log_date = ?",
+            [client_id, daily_workouts_id, log_date]
+        );
+        
+        if (rows.length === 0) {
+            return res.status(404).json({ message: "Nota no encontrada" });
+        }
+        
+        return res.status(200).json({
+            message: "Nota encontrada",
+            data: rows[0]
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message,
+        });
+    }
+}
+
 module.exports = {
     listByClient,
     assignWorkout,
@@ -175,5 +249,7 @@ module.exports = {
     listByTrainer,
     addWorkout,
     deleteWorkout,
-    updateWorkout
+    updateWorkout,
+    addNoteToWorkout,
+    getWorkoutNote
 }
