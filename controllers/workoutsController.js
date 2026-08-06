@@ -170,7 +170,7 @@ const updateDailyWorkout = async (req, res) => {
 const addNoteToWorkout = async (req, res) => {
     const { client_id, daily_workouts_id, log_date, note } = req.body;
     
-    if (!client_id || !daily_workouts_id || !log_date || !note) {
+    if (!client_id || !daily_workouts_id || !log_date) {
         return res.status(400).json({ message: "Faltan campos requeridos: client_id, daily_workouts_id, log_date, note" });
     }
     

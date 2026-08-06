@@ -24,8 +24,11 @@ const addProgress = async (req, res) => {
         const [result] = await pool.execute("INSERT INTO progress_history (client_id, weight, waist, hips, arms, legs, photo_front_url, photo_back_url) VALUES (?,?,?,?,?,?,?,?)",[client_id, weight, waist, hips, arms, legs, photo_front, photo_back]);
         const insert_id = result.insertId;
 
-        const [result2] = await pool.execute("INSERT INTO client_profiles (user_id, trainer_id, age, height, initial_weight, training_days, goal, whatsapp_url) VALUES (?,?,?,?,?,?,?,?)",[client_id, trainerId, age, height, weight, training_days, goal, '']); 
-        const insert_id2 = result2.insertId;
+        const [rows] = await pool.execute("SELECT * FROM client_profiles WHERE user_id = ? AND trainer_id = ?",[client_id, trainerId]);
+        if(rows.length == 0){
+            const [result2] = await pool.execute("INSERT INTO client_profiles (user_id, trainer_id, age, height, initial_weight, training_days, goal, whatsapp_url) VALUES (?,?,?,?,?,?,?,?)",[client_id, trainerId, age, height, weight, training_days, goal, '']); 
+            // const insert_id2 = result2.insertId;
+        }
 
         const [result3] = await pool.execute("UPDATE users SET status = 1 WHERE id = ?", [client_id]);
         const affectedRows = result3.affectedRows;
@@ -33,7 +36,7 @@ const addProgress = async (req, res) => {
         return res.status(201).json({
             message:"Registro Creado",
             id: insert_id,
-            id2: insert_id2,
+            // id2: insert_id2,
             affectedRows: affectedRows
         })
     } catch (error) {
@@ -101,7 +104,24 @@ const getProfile = async (req, res) =>{
         const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
         const client_id = token_json.id;
         const role = token_json.role;
-        [rows] = await pool.execute("SELECT * FROM client_profiles WHERE user_id = ? LIMIT 1",[client_id]);
+        [rows] = await pool.execute("SELECT *, trainers.name as trainer_name, trainers.phone as trainer_phone FROM client_profiles INNER JOIN users trainers ON client_profiles.trainer_id = trainers.id WHERE user_id = ? LIMIT 1",[client_id]);
+        return res.status(200).json({
+            message: "Perfil del Cliente",
+            profile: rows,
+        });
+
+    }catch(error){
+        res.status(500).json({
+            message: "Error",
+            error: error.message
+        })
+    }
+}
+
+const getProfileById = async (req, res) =>{
+    try{
+        const {clientId} = req.params;
+        [rows] = await pool.execute("SELECT * FROM client_profiles WHERE user_id = ?",[clientId]);
         return res.status(200).json({
             message: "Perfil del Cliente",
             profile: rows,
@@ -119,5 +139,6 @@ module.exports = {
     addProgress,
     listProgress,
     getProgress,
-    getProfile
+    getProfile,
+    getProfileById
 }

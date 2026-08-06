@@ -52,6 +52,8 @@ const newsRoutes = require('./routes/v1/newsRoutes');
 app.use('/api/news', newsRoutes);
 const workoutsRoutes = require('./routes/v1/workoutsRoutes');
 app.use('/api/workouts', workoutsRoutes);
+const paymentsRoutes = require('./routes/v1/paymentsRoutes');
+app.use('/api/payments', paymentsRoutes);
 /**
  * Root route handler (GET /)
  * This is the basic "landing page" endpoint.

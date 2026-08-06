@@ -5,7 +5,7 @@ const multer = require('multer');
 const router = express.Router();
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
-const {addProgress, listProgress, getProgress, getProfile} = require('../../controllers/progressController');
+const {addProgress, listProgress, getProgress, getProfile, getProfileById} = require('../../controllers/progressController');
 
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -28,6 +28,7 @@ router.post('/add', authenticateMiddleware, authorizeMiddleware('client'), uploa
 router.get('/list', authenticateMiddleware, authorizeMiddleware('client', 'trainer'), listProgress);
 router.get('/get/:clientId', authenticateMiddleware, authorizeMiddleware('trainer', 'admin', 'client'), getProgress);
 router.get('/get-profile',authenticateMiddleware, authorizeMiddleware('client'), getProfile);
+router.get('/get-profile-by-id/:clientId',authenticateMiddleware, authorizeMiddleware('trainer','admin'), getProfileById);
 module.exports = router;
 
 
