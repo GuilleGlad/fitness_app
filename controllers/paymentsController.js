@@ -1,13 +1,14 @@
 const pool = require('../config/db');
 
 const listPayments = async (req, res) => {
-    const { client_id, status, payment_method, start_date, end_date } = req.query;
+    const { client_id, trainer_id, status, payment_method, start_date, end_date } = req.query;
     
     try {
         let query = `
-            SELECT p.*, u.name as client_name, u.email as client_email
+            SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
             LEFT JOIN users u ON p.client_id = u.id
+            LEFT JOIN users t ON p.trainer_id = t.id
             WHERE 1=1
         `;
         const params = [];
@@ -15,6 +16,10 @@ const listPayments = async (req, res) => {
         if (client_id) {
             query += ' AND p.client_id = ?';
             params.push(client_id);
+        }
+        if (trainer_id) {
+            query += ' AND p.trainer_id = ?';
+            params.push(trainer_id);
         }
         if (status) {
             query += ' AND p.status = ?';
@@ -57,9 +62,10 @@ const getPayment = async (req, res) => {
 
     try {
         const [rows] = await pool.execute(`
-            SELECT p.*, u.name as client_name, u.email as client_email
+            SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
             LEFT JOIN users u ON p.client_id = u.id
+            LEFT JOIN users t ON p.trainer_id = t.id
             WHERE p.id = ?
         `, [id]);
 
@@ -79,12 +85,22 @@ const getPayment = async (req, res) => {
 };
 
 const createPayment = async (req, res) => {
-    const { client_id, amount, status, payment_method, period_covered } = req.body;
+    const { client_id, trainer_id, amount, status, payment_method, period_covered } = req.body;
+    const normalizedClientId = parseInt(client_id, 10);
+    const normalizedTrainerId = parseInt(trainer_id, 10);
     
-    if (!client_id || !amount || !payment_method || !period_covered) {
+    if (!client_id || !trainer_id || !amount || !payment_method || !period_covered) {
         return res.status(400).json({ 
-            message: "Faltan campos requeridos: client_id, amount, payment_method, period_covered" 
+            message: "Faltan campos requeridos: client_id, trainer_id, amount, payment_method, period_covered" 
         });
+    }
+
+    if (Number.isNaN(normalizedClientId) || normalizedClientId <= 0) {
+        return res.status(400).json({ message: "El client_id debe ser un ID válido." });
+    }
+
+    if (Number.isNaN(normalizedTrainerId) || normalizedTrainerId <= 0) {
+        return res.status(400).json({ message: "El trainer_id debe ser un ID válido." });
     }
 
     // Validar que el amount sea un número válido
@@ -95,10 +111,9 @@ const createPayment = async (req, res) => {
     // Validar payment_method
     const validPaymentMethods = ['Zelle', 'Transferencia', 'Efectivo'];
     if (!validPaymentMethods.includes(payment_method)) {
-        validPaymentMethods = 'Transferencia';
-        // return res.status(400).json({ 
-        //     message: "Método de pago inválido. Debe ser: Zelle, Transferencia o Efectivo" 
-        // });
+        return res.status(400).json({ 
+            message: "Método de pago inválido. Debe ser: Zelle, Transferencia o Efectivo" 
+        });
     }
 
     // Validar status si se proporciona
@@ -118,18 +133,19 @@ const createPayment = async (req, res) => {
 
     try {
         const [result] = await pool.execute(
-            `INSERT INTO payments (client_id, amount, receipt_image_url, status, payment_method, period_covered) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [client_id, amount, receipt_image_url, paymentStatus, payment_method, period_covered]
+            `INSERT INTO payments (client_id, trainer_id, amount, receipt_image_url, status, payment_method, period_covered) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [normalizedClientId, normalizedTrainerId, amount, receipt_image_url, paymentStatus, payment_method, period_covered]
         );
 
         const insert_id = result.insertId;
         
         // Obtener el pago creado con información del cliente
         const [rows] = await pool.execute(`
-            SELECT p.*, u.name as client_name, u.email as client_email
+            SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
             LEFT JOIN users u ON p.client_id = u.id
+            LEFT JOIN users t ON p.trainer_id = t.id
             WHERE p.id = ?
         `, [insert_id]);
 
@@ -146,7 +162,7 @@ const createPayment = async (req, res) => {
 
 const updatePayment = async (req, res) => {
     const { id } = req.params;
-    const { client_id, amount, status, payment_method, period_covered } = req.body;
+    const { client_id, trainer_id, amount, status, payment_method, period_covered } = req.body;
     
     if (!id) {
         return res.status(400).json({ message: "ID del pago es necesario." });
@@ -183,8 +199,20 @@ const updatePayment = async (req, res) => {
         const params = [];
 
         if (client_id !== undefined) {
+            const normalizedClientId = parseInt(client_id, 10);
+            if (Number.isNaN(normalizedClientId) || normalizedClientId <= 0) {
+                return res.status(400).json({ message: "El client_id debe ser un ID válido." });
+            }
             updates.push('client_id = ?');
-            params.push(client_id);
+            params.push(normalizedClientId);
+        }
+        if (trainer_id !== undefined) {
+            const normalizedTrainerId = parseInt(trainer_id, 10);
+            if (Number.isNaN(normalizedTrainerId) || normalizedTrainerId <= 0) {
+                return res.status(400).json({ message: "El trainer_id debe ser un ID válido." });
+            }
+            updates.push('trainer_id = ?');
+            params.push(normalizedTrainerId);
         }
         if (amount !== undefined) {
             updates.push('amount = ?');
@@ -226,9 +254,10 @@ const updatePayment = async (req, res) => {
 
         // Obtener el pago actualizado
         const [rows] = await pool.execute(`
-            SELECT p.*, u.name as client_name, u.email as client_email
+            SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
             LEFT JOIN users u ON p.client_id = u.id
+            LEFT JOIN users t ON p.trainer_id = t.id
             WHERE p.id = ?
         `, [id]);
 
@@ -276,9 +305,10 @@ const updatePaymentStatus = async (req, res) => {
 
         // Obtener el pago actualizado
         const [rows] = await pool.execute(`
-            SELECT p.*, u.name as client_name, u.email as client_email
+            SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
             LEFT JOIN users u ON p.client_id = u.id
+            LEFT JOIN users t ON p.trainer_id = t.id
             WHERE p.id = ?
         `, [id]);
 
@@ -328,9 +358,10 @@ const getPaymentsByClient = async (req, res) => {
 
     try {
         const [rows] = await pool.execute(`
-            SELECT p.*, u.name as client_name, u.email as client_email
+            SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
             LEFT JOIN users u ON p.client_id = u.id
+            LEFT JOIN users t ON p.trainer_id = t.id
             WHERE p.client_id = ?
             ORDER BY p.payment_date DESC
         `, [client_id]);

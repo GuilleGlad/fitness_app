@@ -103,6 +103,31 @@ const getCounts = async (req, res) => {
     }
 }
 
+const getCountsByTrainer = async (req, res) => {
+    const {trainer_id} = req.params;
+    try{
+        const [clientsCount, exercisesCount, recipesCount, pendingPaymentsCount] = await Promise.all([
+            pool.execute("SELECT COUNT(*) AS count FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? AND users.status = 1",[trainer_id]), //clientes
+            pool.execute("SELECT COUNT(*) AS count FROM exercises WHERE trainer_id = ?",[trainer_id]), //ejercicios
+            pool.execute("SELECT COUNT(*) AS count FROM recipes WHERE trainer_id = ? AND status = 1",[trainer_id]),
+            pool.execute("SELECT COUNT(*) AS count FROM payments WHERE trainer_id = ? AND status = 'Pendiente'",[trainer_id])
+        ]); 
+        return res.status(200).json({
+            message: "Conteos",
+            counts: {
+                clients: clientsCount[0][0].count,
+                exercises: exercisesCount[0][0].count,
+                recipes: recipesCount[0][0].count,
+                pendingPayments: pendingPaymentsCount[0][0].count,
+            }
+        });
+    }catch(error){
+        return res.status(500).json({
+            message:"Error, " + error.message
+        })
+    }
+}
+
 const getClients = async (req, res) =>{
     try{
         const SecretToken = process.env.TOKEN_SECRET;
@@ -222,5 +247,6 @@ module.exports = {
     getTrainers,
     deleteUser,
     updateUser,
-    restoreUser
+    restoreUser,
+    getCountsByTrainer
 }
