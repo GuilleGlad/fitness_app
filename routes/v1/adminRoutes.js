@@ -9,9 +9,9 @@ const { getUsers, getUser, setSettings, getSettings, getCounts, getClients, getT
 //AUTH - /admin
 router.get('/users', authenticateMiddleware, authorizeMiddleware('admin'), getUsers); 
 router.get('/user/:id', authenticateMiddleware, authorizeMiddleware('admin'), getUser);
-router.delete('/user/:id', authenticateMiddleware, authorizeMiddleware('admin'), deleteUser);
-router.put('/user-restore/:id', authenticateMiddleware, authorizeMiddleware('admin'), restoreUser);
-router.put('/user/:id', authenticateMiddleware, authorizeMiddleware('admin'), updateUser);
+router.delete('/user/:id', authenticateMiddleware, authorizeMiddleware('admin','trainer'), deleteUser);
+router.put('/user-restore/:id', authenticateMiddleware, authorizeMiddleware('admin','trainer'), restoreUser);
+router.put('/user/:id', authenticateMiddleware, authorizeMiddleware('admin','trainer'), updateUser);
 router.post('/settings', authenticateMiddleware, authorizeMiddleware('admin'), setSettings);
 router.get('/settings', getSettings);
 router.get('/counts', authenticateMiddleware, authorizeMiddleware('admin'), getCounts);

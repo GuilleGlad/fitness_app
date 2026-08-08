@@ -17,7 +17,7 @@ const getUsers = async (req, res) => {
     const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
     const client_id = token_json.id;
     try{
-        const [result] = await pool.execute("SELECT * FROM users WHERE status = 1")
+        const [result] = await pool.execute("SELECT * FROM users WHERE 1 = 1")
         return res.status(200).json({
             message: "Usuarios",
             result: result
@@ -146,9 +146,9 @@ const getClients = async (req, res) =>{
         const role = token_json.role;
         // console.log(role);
         if(role !== 'admin'){
-            [rows] = await pool.execute("SELECT * FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? AND users.status = 1",[client_id]);
+            [rows] = await pool.execute("SELECT *, users.status as status_cuenta FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? ",[client_id]);
         }else{
-            [rows] = await pool.execute("SELECT * FROM users LEFT JOIN client_profiles ON client_profiles.user_id = ? ",[client_id]);
+            [rows] = await pool.execute("SELECT *, users.status as status_cuenta, client_profiles.status FROM users LEFT JOIN client_profiles ON client_profiles.user_id = users.id WHERE 1 = 1 ",[client_id]);
         }
         return res.status(200).json({
             message: "Listado de Clientes",
@@ -183,7 +183,7 @@ const getTrainers = async(req, res) => {
 const deleteUser = async(req, res) => {
     try{
         const {id} = req.params;
-        await pool.execute("UPDATE users SET status = 0, deleted = 1 WHERE id = ?",[id]);
+        await pool.execute("UPDATE users SET deleted = 1 WHERE id = ?",[id]);
         return res.status(200).json({
             message: "Usuario Eliminado",
         });
@@ -203,11 +203,11 @@ const updateUser = async(req, res) => {
                 message: "Falta el Id del Usuario",
             });
         }
-        const {email, genre, name, password, phone, role, picture = '/images/avatar.png'} = req.body;
+        const {email, genre, name, password, phone, role, picture = '/images/avatar.png', status_cuenta} = req.body;
         if(role != null){
-            await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ?, role = ? WHERE id = ?",[email, genre, name, password, phone, picture, role, id]);
+            await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ?, role = ?, status = ? WHERE id = ?",[email, genre, name, password, phone, picture, role, status_cuenta, id]);
         }else{
-            await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ? WHERE id = ?",[email, genre, name, password, phone, picture, id]);
+            await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ?, status = ? WHERE id = ?",[email, genre, name, password, phone, picture, status_cuenta, id]);
         } 
         
         return res.status(200).json({
@@ -224,7 +224,7 @@ const updateUser = async(req, res) => {
 const restoreUser = async(req, res) => {
     try{
         const {id} = req.params;
-        await pool.execute("UPDATE users SET status = 0, deleted = 0 WHERE id = ?",[id]);
+        await pool.execute("UPDATE users SET deleted = 0 WHERE id = ?",[id]);
         return res.status(200).json({
             message: "Usuario Restaurado",
         });

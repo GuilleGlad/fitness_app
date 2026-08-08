@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
-const { listByClient, assignWorkout, deassignWorkout, updateDailyWorkout, listByTrainer, deleteWorkout, addWorkout, updateWorkout, addNoteToWorkout, getWorkoutNote} = require('../../controllers/workoutsController');
+const { listByClient, assignWorkout, deassignWorkout, updateDailyWorkout, listByTrainer, deleteWorkout, addWorkout, updateWorkout, addNoteToWorkout, getWorkoutNote, getWorkoutNoteById, updateNoteFeedback} = require('../../controllers/workoutsController');
+
 
 //WORKOUTS - /workouts
 router.get('/list/:client_id', authenticateMiddleware, authorizeMiddleware('trainer','admin', 'client'), listByClient);
@@ -15,4 +16,8 @@ router.put('/update/:id', authenticateMiddleware, authorizeMiddleware('trainer',
 router.put('/update-workout/:id', authenticateMiddleware, authorizeMiddleware('trainer','admin'), updateWorkout);
 router.post('/add-note', authenticateMiddleware, authorizeMiddleware('client'), addNoteToWorkout);
 router.get('/get-note', authenticateMiddleware, authorizeMiddleware('trainer','admin', 'client'), getWorkoutNote);
+router.get('/get-note-by-id/:id', authenticateMiddleware, authorizeMiddleware('trainer','admin', 'client'), getWorkoutNoteById);
+router.put('/update-feedback/:id', authenticateMiddleware, authorizeMiddleware('trainer','admin', 'client'), updateNoteFeedback);
+
+
 module.exports = router;
