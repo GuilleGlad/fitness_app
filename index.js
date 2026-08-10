@@ -4,6 +4,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 
+const http = require('http');
+const {Server} = require('socket.io');
+
 // Cargar variables de entorno (asegúrate de que sea el primer archivo)
 dotenv.config();
 // 2. Initialize the express application
@@ -54,56 +57,9 @@ const workoutsRoutes = require('./routes/v1/workoutsRoutes');
 app.use('/api/workouts', workoutsRoutes);
 const paymentsRoutes = require('./routes/v1/paymentsRoutes');
 app.use('/api/payments', paymentsRoutes);
-/**
- * Root route handler (GET /)
- * This is the basic "landing page" endpoint.
- */
-app.get('/', (req, res) => {
-    res.status(200).send('<h1>Welcome to the Express API!</h1><p>Try accessing the <a href="/api/data">/api/data</a> endpoint.</p>');
-});
+const notificationsRoutes = require('./routes/v1/notificationsRoutes');
+app.use('/api/notifications', notificationsRoutes);
 
-
-/**
- * Example API endpoint: /api/data
- * This demonstrates handling a GET request and responding with JSON.
- */
-app.get('/api/data', (req, res) => {
-    const dummyData = [
-        { id: 1, message: 'Item one retrieved successfully.' },
-        { id: 2, message: 'Item two retrieved successfully.' },
-        { id: 3, message: 'Service is running.' }
-    ];
-    // res.json() automatically sets the Content-Type header to application/json
-    res.status(200).json({ 
-        success: true, 
-        data: dummyData, 
-        timestamp: new Date().toISOString() 
-    });
-});
-
-
-/**
- * Example POST route handler: /api/submit
- * This demonstrates accepting and processing JSON data sent in the request body.
- */
-app.post('/api/submit', (req, res) => {
-    // Since we used app.use(express.json()), the data is available in req.body
-    const submittedData = req.body; 
-    
-    if (!submittedData || !submittedData.name) {
-        return res.status(400).json({ success: false, message: 'Missing name in the request body.' });
-    }
-
-    console.log(`Received submission for: ${submittedData.name}`);
-
-    // Logic to save data to a database would go here...
-
-    res.status(201).json({ 
-        success: true, 
-        message: 'Data received and processed successfully!',
-        received: submittedData 
-    });
-});
 
 app.get('/api/testApi', (req, res) => {
     res.status(200).json({
@@ -113,12 +69,42 @@ app.get('/api/testApi', (req, res) => {
     })
 })
 
+// =================================================================
+// ⚡ SOCKET.IO
+// =================================================================
+const server = http.createServer(app);
 
+const io = new Server(server, {
+    cors:{
+        origin: "*",
+        methods: ["GET","POST"]
+    }
+});
+
+io.on('connection', (socket) => {
+    console.log(`Cliente conectado ${socket.id}`)
+
+    socket.on('mensaje_cliente', (data) => {
+        console.log('Mensaje recibido:', data);
+
+        io.emit('mensaje_servidor', {
+            emisor: socket.id,
+            texto: data.texto
+        });
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`Cliente desconectado: ${socket.id}`)
+    })
+
+})
+app.set('io', io);
 // =================================================================
 // 🚀 START THE SERVER
 // =================================================================
 
-app.listen(PORT, () => {
+
+server.listen(PORT, () => {
     console.log('========================================');
     console.log(`✅ Server is running successfully!`);
     console.log(`🚀 Access the API at: http://localhost:${PORT}`);
