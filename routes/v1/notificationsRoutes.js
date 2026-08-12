@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {listNotifications, getNotification, createNotification, updateNotification, updateNotificationStatus, deleteNotification} = require('../../controllers/notificationsController');
+const {listNotifications, getNotification, createNotification, updateNotification, updateNotificationStatus, deleteNotification, updateNotificationsStatusBulk} = require('../../controllers/notificationsController');
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
 
@@ -11,5 +11,6 @@ router.post('/', createNotification);
 router.put('/:id', updateNotification);
 router.patch('/:id/status', updateNotificationStatus);
 router.delete('/:id', deleteNotification);
+router.patch('/status', updateNotificationsStatusBulk);
 
 module.exports = router;

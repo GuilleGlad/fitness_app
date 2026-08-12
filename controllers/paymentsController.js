@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const notificationService = require('../services/notificationsService');
 
 const listPayments = async (req, res) => {
     const { client_id, trainer_id, status, payment_method, start_date, end_date } = req.query;
@@ -88,6 +89,7 @@ const createPayment = async (req, res) => {
     const { client_id, trainer_id, amount, status, payment_method, period_covered } = req.body;
     const normalizedClientId = parseInt(client_id, 10);
     const normalizedTrainerId = parseInt(trainer_id, 10);
+    const io = req.app.get('io');
     
     if (!client_id || !trainer_id || !amount || !payment_method || !period_covered) {
         return res.status(400).json({ 
@@ -149,7 +151,18 @@ const createPayment = async (req, res) => {
             WHERE p.id = ?
         `, [insert_id]);
 
-        return res.status(201).json({
+        payload = {
+            message : `El usuario ${rows[0].client_name} acaba de realizar un pago.`,
+            destination_id : trainer_id,
+            source_id : client_id,
+            status : 0,
+            navigate_to : '/payments'
+        }
+        const data_notification = await notificationService.createNotification(payload);
+        
+        if (io) io.emit('new_notification', data_notification);
+        
+        return res.status(201).json({ 
             message: "Pago creado correctamente",
             data: rows[0]
         });
