@@ -1,9 +1,10 @@
 const pool = require('../config/db');
 const notificationService = require('../services/notificationsService');
+const emailService = require('../services/emailService');
 
 const listPayments = async (req, res) => {
     const { client_id, trainer_id, status, payment_method, start_date, end_date } = req.query;
-    
+
     try {
         let query = `
             SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
@@ -90,7 +91,9 @@ const createPayment = async (req, res) => {
     const normalizedClientId = parseInt(client_id, 10);
     const normalizedTrainerId = parseInt(trainer_id, 10);
     const io = req.app.get('io');
-    
+    const fullUrl = req.get('origin'); 
+
+
     if (!client_id || !trainer_id || !amount || !payment_method || !period_covered) {
         return res.status(400).json({ 
             message: "Faltan campos requeridos: client_id, trainer_id, amount, payment_method, period_covered" 
@@ -156,12 +159,16 @@ const createPayment = async (req, res) => {
             destination_id : trainer_id,
             source_id : client_id,
             status : 0,
-            navigate_to : '/payments'
+            navigate_to : fullUrl+'/trainer-payments'
         }
         const data_notification = await notificationService.createNotification(payload);
         
         if (io) io.emit('new_notification', data_notification);
-        
+
+        emailService.sendNotificationEmail(data_notification).catch((error) => {
+            console.error('Error enviando correo de notificación:', error.message);
+        });        
+
         return res.status(201).json({ 
             message: "Pago creado correctamente",
             data: rows[0]
@@ -288,7 +295,9 @@ const updatePayment = async (req, res) => {
 const updatePaymentStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
-    
+    const io = req.app.get('io');
+    const fullUrl = req.get('origin'); 
+
     if (!id) {
         return res.status(400).json({ message: "ID del pago es necesario." });
     }
@@ -309,7 +318,6 @@ const updatePaymentStatus = async (req, res) => {
             'UPDATE payments SET status = ? WHERE id = ?',
             [status, id]
         );
-
         const affectedRows = result.affectedRows;
 
         if (affectedRows === 0) {
@@ -318,12 +326,26 @@ const updatePaymentStatus = async (req, res) => {
 
         // Obtener el pago actualizado
         const [rows] = await pool.execute(`
-            SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
+            SELECT p.*, u.id as client_id, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
             LEFT JOIN users u ON p.client_id = u.id
             LEFT JOIN users t ON p.trainer_id = t.id
             WHERE p.id = ?
         `, [id]);
+
+        payload = {
+            message : `Hola ${rows[0].client_name}, su pago ha sido ${status}.`,
+            destination_id : rows[0].client_id,
+            source_id : rows[0].trainer_email,
+            status : 0,
+            navigate_to : fullUrl + '/login'
+        }
+        const data_notification = await notificationService.createNotification(payload);
+        if (io) io.emit('new_notification', data_notification);
+
+        emailService.sendNotificationEmail(data_notification).catch((error) => {
+            console.error('Error enviando correo de notificación:', error.message);
+        });      
 
         return res.status(200).json({
             message: `Estado del pago actualizado a ${status}`,

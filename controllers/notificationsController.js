@@ -1,4 +1,5 @@
 const notificationService = require('../services/notificationsService');
+const emailService = require('../services/emailService');
 
 const listNotifications = async (req, res) => {
     try {
@@ -31,6 +32,13 @@ const createNotification = async (req, res) => {
         const data = await notificationService.createNotification(req.body);
 
         if (io) io.emit('new_notification', data);
+
+        // No se espera (await) el envío del correo para no retrasar la respuesta
+        // al cliente. Si falla, se registra el error pero no afecta la creación
+        // de la notificación.
+        emailService.sendNotificationEmail(data).catch((error) => {
+            console.error('Error enviando correo de notificación:', error.message);
+        });
 
         res.status(201).json({ message: 'Notificación creada correctamente', data });
     } catch (error) {
