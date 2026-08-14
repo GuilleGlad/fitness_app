@@ -3,6 +3,11 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const registerUser = async (req, res) => {
+    const io = req.app.get("io");
+    const notificationService = require('../services/notificationsService');
+    const emailService = require('../services/emailService');
+    const fullUrl = req.get('origin'); 
+
     const { name, email, password, role, genre, phone} = req.body;
     if (!name || !email || !password || !role || !genre) {
         return res.status(400).json({ message: "Faltan campos que son requeridos." });
@@ -30,6 +35,22 @@ const registerUser = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
+
+        const payload = {
+            message: `El cliente con nombre ${name}, acaba de registrarse en la plataforma.`,
+            destination_id: 1,
+            source_id: userId,
+            status: 0,
+            navigato_to: fullUrl + "/clients"
+        }
+
+        const data_notification = await notificationService.createNotification(payload);
+
+        if (io) io.emit('new_notification', data_notification);
+
+        emailService.sendNotificationEmail(data_notification).catch((error) => {
+            console.error('Error enviando correo de notificación:', error.message);
+        });    
 
         res.status(201).json({
             message: "Registro Exitoso",

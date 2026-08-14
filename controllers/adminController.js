@@ -146,9 +146,9 @@ const getClients = async (req, res) =>{
         const role = token_json.role;
         // console.log(role);
         if(role !== 'admin'){
-            [rows] = await pool.execute("SELECT *, users.status as status_cuenta FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? ",[client_id]);
+            [rows] = await pool.execute("SELECT *, users.id as user_id, users.status as status_cuenta, client_profiles.status as client_profiles_status FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? ",[client_id]);
         }else{
-            [rows] = await pool.execute("SELECT *, users.status as status_cuenta, client_profiles.status FROM users LEFT JOIN client_profiles ON client_profiles.user_id = users.id WHERE 1 = 1 ",[client_id]);
+            [rows] = await pool.execute("SELECT *, users.id as user_id, users.status as status_cuenta, client_profiles.status as client_profiles_status FROM users LEFT JOIN client_profiles ON client_profiles.user_id = users.id WHERE 1 = 1 ",[client_id]);
         }
         return res.status(200).json({
             message: "Listado de Clientes",

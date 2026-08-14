@@ -4,7 +4,11 @@ const pool = require('../config/db');
 
 const addProgress = async (req, res) => {
     const { client_id, height, weight, waist, hips, arms, legs, age, training_days, goal, trainerId  } = req.body;
-    
+    const io = req.app.get("io");
+    const fullUrl = req.get("origin");
+    const emailService = require("../services/emailService");
+    const notificationService = require("../services/notificationsService");
+
     if (!client_id || !height || !weight || !waist || !hips || !arms || !legs) {
         return res.status(400).json({ message: "Faltan campos necesarios para el registro." });
     }
@@ -32,6 +36,24 @@ const addProgress = async (req, res) => {
 
         const [result3] = await pool.execute("UPDATE users SET status = 1 WHERE id = ?", [client_id]);
         const affectedRows = result3.affectedRows;
+
+        const [client_data] = await pool.execute("SELECT * FROM users WHERE id = ?",[client_id]);
+
+        const payload = {
+            message: `El cliente con nombre ${client_data[0].name}, acaba de seleccionarte como su Entrenador.`,
+            destination_id: trainerId,
+            source_id: client_data[0].id,
+            status: 0,
+            navigato_to: fullUrl + "/clients"
+        }
+
+        const data_notification = await notificationService.createNotification(payload);
+
+        if (io) io.emit('new_notification', data_notification);
+
+        emailService.sendNotificationEmail(data_notification).catch((error) => {
+            console.error('Error enviando correo de notificación:', error.message);
+        });    
 
         return res.status(201).json({
             message:"Registro Creado",
