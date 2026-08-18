@@ -158,6 +158,7 @@ const refreshToken = async (req, res) => {
 const checkToken = async (req, res) => {
     try{
         const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
+        try{
         jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
             if (err) {
                 return res.status(401).json({
@@ -170,6 +171,12 @@ const checkToken = async (req, res) => {
             message: "Token válido",
             token,
         });
+    }catch(error){
+        console.error("Error al verificar el token:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor al verificar el token"
+        });
+    }
     }catch(error){
         console.error("Error al verificar el token:", error);
         return res.status(500).json({

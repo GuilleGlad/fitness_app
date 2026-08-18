@@ -315,7 +315,7 @@ const updatePaymentStatus = async (req, res) => {
 
     try {
         const [result] = await pool.execute(
-            'UPDATE payments SET status = ? WHERE id = ?',
+            'UPDATE payments SET status = ?, status_date = NOW(), expiration_date = DATE_ADD(NOW(),INTERVAL 1 MONTH)  WHERE id = ?',
             [status, id]
         );
         const affectedRows = result.affectedRows;
@@ -412,6 +412,90 @@ const getPaymentsByClient = async (req, res) => {
     }
 };
 
+const checkPaymentExpiration = async (req, res) => {
+    const { id } = req.params;
+    
+    if (!id) {
+        return res.status(400).json({ message: "ID del pago es necesario." });
+    }
+
+    try {
+        // Obtener el pago con sus fechas
+        const [rows] = await pool.execute(`
+            SELECT p.*, u.name as client_name, u.email as client_email, u.id as client_id
+            FROM payments p
+            LEFT JOIN users u ON p.client_id = u.id
+            WHERE p.id = ?
+        `, [id]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: "Pago no encontrado." });
+        }
+
+        const payment = rows[0];
+        const currentDate = new Date();
+        const expirationDate = payment.expiration_date ? new Date(payment.expiration_date) : null;
+        const statusDate = payment.status_date ? new Date(payment.status_date) : null;
+
+        // Verificar si expiration_date existe
+        if (!expirationDate) {
+            return res.status(400).json({ 
+                message: "El pago no tiene fecha de expiración configurada." 
+            });
+        }
+
+        // Condición 1: Si expiration_date >= fecha actual del servidor
+        // El pago ha expirado (la fecha de expiración ya pasó o es hoy)
+        if (expirationDate <= currentDate) {
+            // Actualizar status a 'Expirado' si no lo está ya
+            if (payment.status !== 'Expirado') {
+                await pool.execute(
+                    'UPDATE payments SET status = ? WHERE id = ?',
+                    ['Expirado', id]
+                );
+            }
+
+            return res.status(200).json({
+                message: "El pago ha expirado",
+                alert: "El pago ya expiró y debe pagar la mensualidad.",
+                status_modification: true,
+                data: {
+                    ...payment,
+                    status: 'Expirado'
+                }
+            });
+        }
+
+        // Condición 2: Si expiration_date > status_date + 1 mes + 5 días
+        // El pago está vencido y debe pagar para reactivar su cuenta
+        if (statusDate) {
+            const limitDate = new Date(statusDate);
+            limitDate.setMonth(limitDate.getMonth() + 1); // + 1 mes
+            limitDate.setDate(limitDate.getDate() + 5);   // + 5 días
+
+            if (expirationDate > limitDate) {
+                return res.status(200).json({
+                    message: "Pago vencido",
+                    alert: "El pago está vencido y debe pagar para reactivar su cuenta.",
+                    data: payment
+                });
+            }
+        }
+
+        // Si ninguna condición se cumple, el pago está vigente
+        return res.status(200).json({
+            message: "Pago vigente",
+            alert: "El pago está al día.",
+            data: payment
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message
+        });
+    }
+};
+
 module.exports = {
     listPayments,
     getPayment,
@@ -419,5 +503,6 @@ module.exports = {
     updatePayment,
     updatePaymentStatus,
     deletePayment,
-    getPaymentsByClient
+    getPaymentsByClient,
+    checkPaymentExpiration
 };
