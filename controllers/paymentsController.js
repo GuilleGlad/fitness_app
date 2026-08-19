@@ -43,7 +43,7 @@ const listPayments = async (req, res) => {
         query += ' ORDER BY p.payment_date DESC';
 
         const [rows] = await pool.execute(query, params);
-        
+
         return res.status(200).json({
             message: "Listado de pagos",
             data: rows
@@ -57,7 +57,7 @@ const listPayments = async (req, res) => {
 
 const getPayment = async (req, res) => {
     const { id } = req.params;
-    
+
     if (!id) {
         return res.status(400).json({ message: "ID del pago es necesario." });
     }
@@ -91,12 +91,12 @@ const createPayment = async (req, res) => {
     const normalizedClientId = parseInt(client_id, 10);
     const normalizedTrainerId = parseInt(trainer_id, 10);
     const io = req.app.get('io');
-    const fullUrl = req.get('origin'); 
+    const fullUrl = req.get('origin');
 
 
     if (!client_id || !trainer_id || !amount || !payment_method || !period_covered) {
-        return res.status(400).json({ 
-            message: "Faltan campos requeridos: client_id, trainer_id, amount, payment_method, period_covered" 
+        return res.status(400).json({
+            message: "Faltan campos requeridos: client_id, trainer_id, amount, payment_method, period_covered"
         });
     }
 
@@ -116,8 +116,8 @@ const createPayment = async (req, res) => {
     // Validar payment_method
     const validPaymentMethods = ['Zelle', 'Transferencia', 'Efectivo'];
     if (!validPaymentMethods.includes(payment_method)) {
-        return res.status(400).json({ 
-            message: "Método de pago inválido. Debe ser: Zelle, Transferencia o Efectivo" 
+        return res.status(400).json({
+            message: "Método de pago inválido. Debe ser: Zelle, Transferencia o Efectivo"
         });
     }
 
@@ -125,8 +125,8 @@ const createPayment = async (req, res) => {
     const validStatuses = ['Pendiente', 'Aprobado', 'Rechazado'];
     const paymentStatus = status || 'Pendiente';
     if (!validStatuses.includes(paymentStatus)) {
-        return res.status(400).json({ 
-            message: "Estado inválido. Debe ser: Pendiente, Aprobado o Rechazado" 
+        return res.status(400).json({
+            message: "Estado inválido. Debe ser: Pendiente, Aprobado o Rechazado"
         });
     }
 
@@ -144,7 +144,7 @@ const createPayment = async (req, res) => {
         );
 
         const insert_id = result.insertId;
-        
+
         // Obtener el pago creado con información del cliente
         const [rows] = await pool.execute(`
             SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
@@ -155,21 +155,21 @@ const createPayment = async (req, res) => {
         `, [insert_id]);
 
         payload = {
-            message : `El usuario ${rows[0].client_name} acaba de realizar un pago.`,
-            destination_id : trainer_id,
-            source_id : client_id,
-            status : 0,
-            navigate_to : fullUrl+'/trainer-payments'
+            message: `El usuario ${rows[0].client_name} acaba de realizar un pago.`,
+            destination_id: trainer_id,
+            source_id: client_id,
+            status: 0,
+            navigate_to: fullUrl + '/trainer-payments'
         }
         const data_notification = await notificationService.createNotification(payload);
-        
+
         if (io) io.emit('new_notification', data_notification);
 
         emailService.sendNotificationEmail(data_notification).catch((error) => {
             console.error('Error enviando correo de notificación:', error.message);
-        });        
+        });
 
-        return res.status(201).json({ 
+        return res.status(201).json({
             message: "Pago creado correctamente",
             data: rows[0]
         });
@@ -183,7 +183,7 @@ const createPayment = async (req, res) => {
 const updatePayment = async (req, res) => {
     const { id } = req.params;
     const { client_id, trainer_id, amount, status, payment_method, period_covered } = req.body;
-    
+
     if (!id) {
         return res.status(400).json({ message: "ID del pago es necesario." });
     }
@@ -197,8 +197,8 @@ const updatePayment = async (req, res) => {
     if (payment_method) {
         const validPaymentMethods = ['Zelle', 'Transferencia', 'Efectivo'];
         if (!validPaymentMethods.includes(payment_method)) {
-            return res.status(400).json({ 
-                message: "Método de pago inválido. Debe ser: Zelle, Transferencia o Efectivo" 
+            return res.status(400).json({
+                message: "Método de pago inválido. Debe ser: Zelle, Transferencia o Efectivo"
             });
         }
     }
@@ -207,8 +207,8 @@ const updatePayment = async (req, res) => {
     if (status) {
         const validStatuses = ['Pendiente', 'Aprobado', 'Rechazado'];
         if (!validStatuses.includes(status)) {
-            return res.status(400).json({ 
-                message: "Estado inválido. Debe ser: Pendiente, Aprobado o Rechazado" 
+            return res.status(400).json({
+                message: "Estado inválido. Debe ser: Pendiente, Aprobado o Rechazado"
             });
         }
     }
@@ -264,7 +264,7 @@ const updatePayment = async (req, res) => {
 
         params.push(id);
         const query = `UPDATE payments SET ${updates.join(', ')} WHERE id = ?`;
-        
+
         const [result] = await pool.execute(query, params);
         const affectedRows = result.affectedRows;
 
@@ -296,7 +296,7 @@ const updatePaymentStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     const io = req.app.get('io');
-    const fullUrl = req.get('origin'); 
+    const fullUrl = req.get('origin');
 
     if (!id) {
         return res.status(400).json({ message: "ID del pago es necesario." });
@@ -308,8 +308,8 @@ const updatePaymentStatus = async (req, res) => {
 
     const validStatuses = ['Pendiente', 'Aprobado', 'Rechazado'];
     if (!validStatuses.includes(status)) {
-        return res.status(400).json({ 
-            message: "Estado inválido. Debe ser: Pendiente, Aprobado o Rechazado" 
+        return res.status(400).json({
+            message: "Estado inválido. Debe ser: Pendiente, Aprobado o Rechazado"
         });
     }
 
@@ -334,18 +334,18 @@ const updatePaymentStatus = async (req, res) => {
         `, [id]);
 
         payload = {
-            message : `Hola ${rows[0].client_name}, su pago ha sido ${status}.`,
-            destination_id : rows[0].client_id,
-            source_id : rows[0].trainer_email,
-            status : 0,
-            navigate_to : fullUrl + '/login'
+            message: `Hola ${rows[0].client_name}, su pago ha sido ${status}.`,
+            destination_id: rows[0].client_id,
+            source_id: rows[0].trainer_email,
+            status: 0,
+            navigate_to: fullUrl + '/login'
         }
         const data_notification = await notificationService.createNotification(payload);
         if (io) io.emit('new_notification', data_notification);
 
         emailService.sendNotificationEmail(data_notification).catch((error) => {
             console.error('Error enviando correo de notificación:', error.message);
-        });      
+        });
 
         return res.status(200).json({
             message: `Estado del pago actualizado a ${status}`,
@@ -360,7 +360,7 @@ const updatePaymentStatus = async (req, res) => {
 
 const deletePayment = async (req, res) => {
     const { id } = req.params;
-    
+
     if (!id) {
         return res.status(400).json({ message: "ID del pago es necesario." });
     }
@@ -386,7 +386,7 @@ const deletePayment = async (req, res) => {
 
 const getPaymentsByClient = async (req, res) => {
     const { client_id } = req.params;
-    
+
     if (!client_id) {
         return res.status(400).json({ message: "ID del cliente es necesario." });
     }
@@ -414,7 +414,8 @@ const getPaymentsByClient = async (req, res) => {
 
 const checkPaymentExpiration = async (req, res) => {
     const { id } = req.params;
-    
+    const io = req.app.get("io");
+    const fullUrl = req.get('origin');
     if (!id) {
         return res.status(400).json({ message: "ID del pago es necesario." });
     }
@@ -439,8 +440,8 @@ const checkPaymentExpiration = async (req, res) => {
 
         // Verificar si expiration_date existe
         if (!expirationDate) {
-            return res.status(400).json({ 
-                message: "El pago no tiene fecha de expiración configurada." 
+            return res.status(400).json({
+                message: "El pago no tiene fecha de expiración configurada."
             });
         }
 
@@ -454,6 +455,28 @@ const checkPaymentExpiration = async (req, res) => {
                     ['Expirado', id]
                 );
             }
+
+            const [rows] = await pool.execute(`
+                SELECT p.*, u.id as client_id, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
+                FROM payments p
+                LEFT JOIN users u ON p.client_id = u.id
+                LEFT JOIN users t ON p.trainer_id = t.id
+                WHERE p.id = ?
+            `, [id]);
+            
+            payload = {
+                message: `Hola ${rows[0].client_name}, su mensualidad se ha vencido, debe hacer el pago de la mensualidad para reactivar la cuenta.`,
+                destination_id: rows[0].client_id,
+                source_id: 1,
+                status: 0,
+                navigate_to: fullUrl + '/login'
+            }
+            const data_notification = await notificationService.createNotification(payload);
+            if (io) io.emit('new_notification', data_notification);
+
+            emailService.sendNotificationEmail(data_notification).catch((error) => {
+                console.error('Error enviando correo de notificación:', error.message);
+            });
 
             return res.status(200).json({
                 message: "El pago ha expirado",
