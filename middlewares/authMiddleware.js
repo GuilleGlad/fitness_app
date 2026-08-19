@@ -12,7 +12,7 @@ const authenticateMiddleware = (req, res, next) => {
     try{
         jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
             if(err){
-                console.error("Error en la autenticacion:", error.message);
+                console.error("Error en la autenticacion:", err.message);
                 return res.status(401).json({
                     message: "Token invalido o expirado. Por favor, iniciar sesion de nuevo"
                 })

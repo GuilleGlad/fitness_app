@@ -109,6 +109,10 @@ server.listen(PORT, () => {
     console.log(`✅ Server is running successfully!`);
     console.log(`🚀 Access the API at: http://localhost:${PORT}`);
     console.log('========================================');
+    
+    // Inicializar el programador cron para verificar perfiles de clientes
+    const cronService = require('./services/cronService');
+    cronService.startCronScheduler();
 });
 
 

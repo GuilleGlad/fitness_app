@@ -156,34 +156,28 @@ const refreshToken = async (req, res) => {
     }
 }
 const checkToken = async (req, res) => {
-    try{
-        const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
-        try{
-        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-            if (err) {
-                return res.status(401).json({
-                    message: "Token inválido o expirado",
-                    error: err.message
-                });
-            }
-        });
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+        return res.status(401).json({ message: "Token no proporcionado" });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({
+                message: "Token inválido o expirado",
+                error: err.message
+            });
+        }
+
         return res.status(200).json({
             message: "Token válido",
             token,
+            decoded
         });
-    }catch(error){
-        console.error("Error al verificar el token:", error);
-        return res.status(500).json({
-            message: "Error interno del servidor al verificar el token"
-        });
-    }
-    }catch(error){
-        console.error("Error al verificar el token:", error);
-        return res.status(500).json({
-            message: "Error interno del servidor al verificar el token"
-        });
-    }
-}
+    });
+};
+
 const logoutUser = async (req, res) => {
     try {
         return res.status(200).json({
