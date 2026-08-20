@@ -93,7 +93,7 @@ const getCounts = async (req, res) => {
                 trainers: trainersCount[0][0].count,
                 news: newsCount[0][0].count,
                 recipes: recipesCount[0][0].count,
-                ads: adsCount[0][0].total_ads
+                ads: adsCount[0][0]?.total_ads ? adsCount[0][0].total_ads : 0
             }
         });
     }catch(error){
