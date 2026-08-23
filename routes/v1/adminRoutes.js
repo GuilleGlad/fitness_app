@@ -3,13 +3,14 @@ const express = require('express');
 const router = express.Router();
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
-const { getUsers, getUser, setSettings, getSettings, getCounts, getClients, getTrainers, deleteUser, updateUser, restoreUser, getCountsByTrainer} = require('../../controllers/adminController');
+const { getUsers, getUser, setSettings, getSettings, getCounts, getClients, getTrainers, deleteUser, updateUser, restoreUser, purgeDeletedUsers, getCountsByTrainer} = require('../../controllers/adminController');
 
 // Endpoints
 //AUTH - /admin
 router.get('/users', authenticateMiddleware, authorizeMiddleware('admin'), getUsers); 
 router.get('/user/:id', authenticateMiddleware, authorizeMiddleware('admin'), getUser);
 router.delete('/user/:id', authenticateMiddleware, authorizeMiddleware('admin','trainer'), deleteUser);
+router.delete('/users/purge', authenticateMiddleware, authorizeMiddleware('admin'), purgeDeletedUsers);
 router.put('/user-restore/:id', authenticateMiddleware, authorizeMiddleware('admin','trainer'), restoreUser);
 router.put('/user/:id', authenticateMiddleware, authorizeMiddleware('admin','trainer'), updateUser);
 router.post('/settings', authenticateMiddleware, authorizeMiddleware('admin'), setSettings);

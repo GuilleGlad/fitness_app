@@ -48,10 +48,10 @@ const getUser = async (req, res) => {
 }
 
 const setSettings = async (req, res) => {
-    const { title, logo, gallery, ads , video, about, username, phone, email, address} = req.body;
+    const { title, logo, gallery, ads , video, about, username, phone, email, address, x_link, instagram_link, youtube_link, facebook_link, tiktok_link} = req.body;
 
     try{
-        await pool.execute("INSERT INTO settings (title,logo, gallery, ads, video_background, about, username, phone, email, address) VALUES (?,?,?,?,?,?,?,?,?,?)", [title,logo, gallery, ads, video, about, username, phone, email, address]);
+        await pool.execute("INSERT INTO settings (title,logo, gallery, ads, video_background, about, username, phone, email, address, x_link, instagram_link, youtube_link, facebook_link, tiktok_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [title,logo, gallery, ads, video, about, username, phone, email, address,x_link?x_link:'', instagram_link?instagram_link:'', youtube_link?youtube_link:'', facebook_link?facebook_link:'', tiktok_link?tiktok_link:'']);
         return res.status(200).json({
             message: "Configuración guardada"
         });
@@ -236,6 +236,21 @@ const restoreUser = async(req, res) => {
     }    
 }
 
+const purgeDeletedUsers = async(req, res) => {
+    try{
+        const [result] = await pool.execute("DELETE FROM users WHERE deleted = 1");
+        return res.status(200).json({
+            message: "Usuarios eliminados permanentemente",
+            deletedCount: result.affectedRows,
+        });
+    }catch(error){
+        return res.status(500).json({
+            message: "Error no se pudo eliminar permanentemente los usuarios",
+            error: error.message
+        });
+    }
+}
+
 
 module.exports = {
     getUsers,
@@ -248,5 +263,6 @@ module.exports = {
     deleteUser,
     updateUser,
     restoreUser,
+    purgeDeletedUsers,
     getCountsByTrainer
 }
