@@ -30,7 +30,7 @@ exports.getNotification = async (id) => {
 };
 
 exports.createNotification = async ({ message, destination_id, source_id, status, navigate_to }) => {
-    const statusValue = status || 'new';
+    const statusValue = status || 0;
     const navigateValue = navigate_to || null;
 
     const [result] = await pool.execute(
