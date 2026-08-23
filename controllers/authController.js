@@ -7,17 +7,19 @@ const registerUser = async (req, res) => {
     const notificationService = require('../services/notificationsService');
     const emailService = require('../services/emailService');
     const fullUrl = req.get('origin'); 
-
-    const { name, email, password, role, genre, phone} = req.body;
+    var defaultStatus = 0;
+    const { name, email, password, role, genre, phone, status} = req.body;
     if (!name || !email || !password || !role || !genre) {
         return res.status(400).json({ message: "Faltan campos que son requeridos." });
     }
     try {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
+        if(role == "Trainer" && status == "Activo"){
+            defaultStatus = 1;
+        }
         const [result] = await pool.execute(
-            'INSERT INTO users (name, email, password, role, genre, phone) VALUES (?, ?, ?, ?, ?, ?)', [name, email, hashedPassword, role, genre, phone]
+            'INSERT INTO users (name, email, password, role, genre, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, email, hashedPassword, role, genre, phone, defaultStatus]
         );
 
         const userId = result.insertId;
@@ -30,7 +32,7 @@ const registerUser = async (req, res) => {
                 genre: genre,
                 phone: phone,
                 role: role,          
-                status: 0,       
+                status: defaultStatus
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
