@@ -41,7 +41,7 @@ const registerUser = async (req, res) => {
             destination_id: 1,
             source_id: userId,
             status: 0,
-            navigato_to: fullUrl + "/clients"
+            navigate_to: fullUrl + "/clients"
         }
 
         const data_notification = await notificationService.createNotification(payload);
