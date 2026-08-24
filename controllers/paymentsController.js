@@ -147,12 +147,25 @@ const createPayment = async (req, res) => {
 
         // Obtener el pago creado con información del cliente
         const [rows] = await pool.execute(`
-            SELECT p.*, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
+            SELECT p.*, DAY(p.payment_date) as payment_day, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
             LEFT JOIN users u ON p.client_id = u.id
             LEFT JOIN users t ON p.trainer_id = t.id
             WHERE p.id = ?
         `, [insert_id]);
+
+        const [paymentCountRows] = await pool.execute(
+            'SELECT COUNT(*) AS payment_count FROM payments WHERE client_id = ?',
+            [normalizedClientId]
+        );
+        const payment_day = Number(rows[0].payment_day);
+
+        if (Number(paymentCountRows[0].payment_count) === 1) {
+            await pool.execute(
+                'UPDATE client_profiles SET payment_day = ? WHERE user_id = ?',
+                [payment_day, normalizedClientId]
+            );
+        }
 
         payload = {
             message: `El usuario ${rows[0].client_name} acaba de realizar un pago.`,
@@ -171,6 +184,7 @@ const createPayment = async (req, res) => {
 
         return res.status(201).json({
             message: "Pago creado correctamente",
+            payment_day: payment_day,
             data: rows[0]
         });
     } catch (error) {
