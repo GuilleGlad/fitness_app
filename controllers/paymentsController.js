@@ -329,7 +329,7 @@ const updatePaymentStatus = async (req, res) => {
 
     try {
         const [paymentRows] = await pool.execute(`
-            SELECT p.id, p.payment_date, cp.payment_day
+            SELECT p.id, DATE_FORMAT(p.payment_date, '%Y-%m-%d') as payment_date_value, cp.payment_day
             FROM payments p
             LEFT JOIN client_profiles cp ON cp.user_id = p.client_id
             WHERE p.id = ?
@@ -347,12 +347,17 @@ const updatePaymentStatus = async (req, res) => {
             // Misma lógica de ciclo usada en checkPaymentExpiration: anclada a
             // payment_date, no a "hoy", para que un pago hecho después del
             // día de corte cubra el ciclo siguiente y no el que ya pasó.
+            // Se usa payment_date_value ('YYYY-MM-DD', vía DATE_FORMAT en SQL)
+            // en vez de `new Date(payment_date)` para evitar que un DATETIME
+            // cercano a medianoche cambie de día calendario al reinterpretarse
+            // con la zona horaria del proceso Node.
             const getCyclePaymentDate = (year, month) => {
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
                 return new Date(year, month, Math.min(paymentDay, daysInMonth));
             };
 
-            const paymentDate = new Date(paymentRow.payment_date);
+            const [payYear, payMonth, payDay] = paymentRow.payment_date_value.split('-').map(Number);
+            const paymentDate = new Date(payYear, payMonth - 1, payDay);
             const currentCycleDate = getCyclePaymentDate(paymentDate.getFullYear(), paymentDate.getMonth());
             const nextCycleDate = getCyclePaymentDate(paymentDate.getFullYear(), paymentDate.getMonth() + 1);
             expirationDate = paymentDate >= currentCycleDate ? nextCycleDate : currentCycleDate;
@@ -492,21 +497,30 @@ const checkPaymentExpiration = async (req, res) => {
         }
 
         // ============================
-        // 🔥 LÓGICA CORREGIDA (v2)
+        // 🔥 LÓGICA CORREGIDA (v3)
         // ============================
         // Se calcula el vencimiento anclado a LA FECHA DEL PAGO (payment_date),
         // no a "hoy". Si el pago se hizo en o después del día de pago del mes
         // en que se hizo, cubre hasta el día de pago del mes SIGUIENTE. Si se
         // hizo antes (pago adelantado), cubre hasta el día de pago de ese
-        // mismo mes. Así un pago hecho hoy 25-ago (payment_day=20) vence el
-        // 20-sep, no el 20-ago que ya pasó.
+        // mismo mes.
+        //
+        // IMPORTANTE: la fecha del pago se construye a partir de
+        // payment_date_value ('YYYY-MM-DD', calculado con DATE_FORMAT en SQL)
+        // y NO a partir de `new Date(payment.payment_date)`. Un DATETIME
+        // reinterpretado en JS puede desplazarse a la zona horaria del
+        // proceso Node y cambiar de día calendario en pagos hechos cerca de
+        // medianoche (ej. 00:15 AM), mientras que payment_day (calculado con
+        // DAY() en SQL) nunca sufre ese corrimiento. Usar la misma fuente
+        // (SQL) para ambos evita que se desincronicen.
 
         const getCyclePaymentDate = (year, month) => {
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             return new Date(year, month, Math.min(paymentDay, daysInMonth));
         };
 
-        const paymentDate = new Date(payment.payment_date);
+        const [payYear, payMonth, payDay] = payment.payment_date_value.split('-').map(Number);
+        const paymentDate = new Date(payYear, payMonth - 1, payDay);
         const currentCycleDate = getCyclePaymentDate(paymentDate.getFullYear(), paymentDate.getMonth());
         const nextCycleDate = getCyclePaymentDate(paymentDate.getFullYear(), paymentDate.getMonth() + 1);
 

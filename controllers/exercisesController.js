@@ -93,11 +93,18 @@ const getExercise = async(req,res) => {
 const getExercises = async(req,res) => {
     const {trainerId} = req.params;
     try{
-        const [rows] = await pool.execute("SELECT * FROM exercises WHERE trainer_id = ?", [trainerId]);
-        // console.log(rows);
-        return res.status(200).json({
-            exercises: rows,
-        })
+        if(trainerId){
+            const [rows] = await pool.execute("SELECT * FROM exercises WHERE trainer_id = ?", [trainerId]);
+            return res.status(200).json({
+                exercises: rows,
+            })
+        }else{
+            const [rows] = await pool.execute("SELECT exercises.*, users.name as username FROM exercises INNER JOIN users ON trainer_id = users.id");
+            return res.status(200).json({
+                exercises: rows,
+            })
+        }
+        
 
     }catch(error){
         return res.status(500).json({

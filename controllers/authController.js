@@ -15,7 +15,8 @@ const registerUser = async (req, res) => {
     try {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        if(role == "Trainer"){
+        console.log(typeof role);
+        if(role == 2 || role == "Trainer" || role == "trainer"){
             defaultStatus = 1;
         }
         const [result] = await pool.execute(
