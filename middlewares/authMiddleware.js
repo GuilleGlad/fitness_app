@@ -5,7 +5,7 @@ const authenticateMiddleware = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if(!authHeader || !authHeader.startsWith('Bearer ')){
         return res.status(401).json({
-            mesasge: "Acceso denegado. Token de autenticacion requerido"
+            message: "Acceso denegado. Token de autenticacion requerido"
         });
     }
     const token = authHeader.split(' ')[1];
@@ -22,7 +22,7 @@ const authenticateMiddleware = (req, res, next) => {
         next();
         })
     }catch(error){
-        console.error("Error en la autenticacion", error.mesasge);
+        console.error("Error en la autenticacion", error.message);
         return res.status(500).json({
             message: "Token invalido o expirado. Por favor,  iniciar sesión de nuevo."
         });

@@ -1,26 +1,21 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
+// Nunca se debe exponer el hash de la contraseña al frontend: ni para
+// listar usuarios ni para precargar formularios de edición.
+const stripPassword = (row) => {
+    if (!row) return row;
+    const { password, ...rest } = row;
+    return rest;
+};
+const stripPasswords = (rows) => rows.map(stripPassword);
+
 const getUsers = async (req, res) => {
-    const SecretToken = process.env.TOKEN_SECRET;
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (token == null) 
-        return res.status(401).send({msg : 'No ha ingresado un token'})
-    jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
-        if (err){
-            return  
-            res.status(403).send({msg : 'Token invalido'})
-        }
-    })
-    const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
-    const client_id = token_json.id;
     try{
         const [result] = await pool.execute("SELECT * FROM users WHERE 1 = 1")
         return res.status(200).json({
             message: "Usuarios",
-            result: result
+            result: stripPasswords(result)
         })
     }catch(error){
         return res.status(500).json({
@@ -38,7 +33,7 @@ const getUser = async (req, res) => {
         const [result] = await pool.execute("SELECT * FROM users WHERE status = 1 AND id = ?", [id])
         return res.status(200).json({
             message: "Usuario",
-            result: result
+            result: stripPasswords(result)
         })
     }catch(error){
         return res.status(500).json({
@@ -130,21 +125,8 @@ const getCountsByTrainer = async (req, res) => {
 
 const getClients = async (req, res) =>{
     try{
-        const SecretToken = process.env.TOKEN_SECRET;
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1];
-        if (token == null) 
-            return res.status(401).send({msg : 'No ha ingresado un token'})
-        jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
-            if (err){
-                return  
-                res.status(403).send({msg : 'Token invalido'})
-            }
-        })
-        const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
-        const client_id = token_json.id;
-        const role = token_json.role;
-        // console.log(role);
+        const client_id = req.user.id;
+        const role = req.user.role;
         if(role !== 'admin'){
             [rows] = await pool.execute("SELECT *, users.id as user_id, users.status as status_cuenta, client_profiles.status as client_profiles_status FROM users INNER JOIN client_profiles ON client_profiles.user_id = users.id WHERE client_profiles.trainer_id = ? ",[client_id]);
         }else{
@@ -152,7 +134,7 @@ const getClients = async (req, res) =>{
         }
         return res.status(200).json({
             message: "Listado de Clientes",
-            clientes: rows,
+            clientes: stripPasswords(rows),
         });
 
     }catch(error){
@@ -169,7 +151,7 @@ const getTrainers = async(req, res) => {
         [rows] = await pool.execute("SELECT * FROM users WHERE role = ?",[role]);
         return res.status(200).json({
             message: "Listado de Entrenadores",
-            entrenadores: rows,
+            entrenadores: stripPasswords(rows),
         });
 
     }catch(error){
@@ -180,9 +162,25 @@ const getTrainers = async(req, res) => {
     }
 }
 
+// Un trainer solo puede tocar usuarios que sean sus propios clientes.
+// El admin no pasa por esta función (se le exime en cada endpoint).
+const isOwnClient = async (trainerId, targetUserId) => {
+    const [rows] = await pool.execute(
+        "SELECT 1 FROM client_profiles WHERE user_id = ? AND trainer_id = ? LIMIT 1",
+        [targetUserId, trainerId]
+    );
+    return rows.length > 0;
+};
+
 const deleteUser = async(req, res) => {
     try{
         const {id} = req.params;
+        if(req.user.role !== 'admin'){
+            const owns = await isOwnClient(req.user.id, id);
+            if(!owns){
+                return res.status(403).json({ message: "No tienes permiso para eliminar este usuario." });
+            }
+        }
         await pool.execute("UPDATE users SET deleted = 1 WHERE id = ?",[id]);
         return res.status(200).json({
             message: "Usuario Eliminado",
@@ -199,17 +197,31 @@ const updateUser = async(req, res) => {
     try{
         const {id} = req.params;
         if(!id){
-            return res.status(500).json({
+            return res.status(400).json({
                 message: "Falta el Id del Usuario",
             });
         }
+        if(req.user.role !== 'admin'){
+            const owns = await isOwnClient(req.user.id, id);
+            if(!owns){
+                return res.status(403).json({ message: "No tienes permiso para modificar este usuario." });
+            }
+        }
         const {email, genre, name, password, phone, role, picture = '/images/avatar.png', status_cuenta} = req.body;
-        if(role != null){
-            await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ?, role = ?, status = ? WHERE id = ?",[email, genre, name, password, phone, picture, role, status_cuenta, id]);
-        }else{
-            await pool.execute("UPDATE users SET email = ?, genre = ?, name = ?, password = ?, phone = ? , picture =  ?, status = ? WHERE id = ?",[email, genre, name, password, phone, picture, status_cuenta, id]);
-        } 
-        
+
+        const fields = { email, genre, name, phone, picture, status: status_cuenta };
+        // Solo un admin puede cambiar el rol de un usuario.
+        if (role != null && req.user.role === 'admin') fields.role = role;
+        // Solo se toca la contraseña si el usuario escribió una nueva; si llega vacía, se conserva la actual.
+        if (password && String(password).trim() !== '') {
+            fields.password = await bcrypt.hash(String(password), 10);
+        }
+
+        const setClause = Object.keys(fields).map((key) => `${key} = ?`).join(', ');
+        const values = [...Object.values(fields), id];
+
+        await pool.execute(`UPDATE users SET ${setClause} WHERE id = ?`, values);
+
         return res.status(200).json({
             message: "Usuario Actualizado",
         });
@@ -224,6 +236,12 @@ const updateUser = async(req, res) => {
 const restoreUser = async(req, res) => {
     try{
         const {id} = req.params;
+        if(req.user.role !== 'admin'){
+            const owns = await isOwnClient(req.user.id, id);
+            if(!owns){
+                return res.status(403).json({ message: "No tienes permiso para restaurar este usuario." });
+            }
+        }
         await pool.execute("UPDATE users SET deleted = 0 WHERE id = ?",[id]);
         return res.status(200).json({
             message: "Usuario Restaurado",
