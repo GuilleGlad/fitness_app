@@ -76,7 +76,7 @@ const loginUser = async (req, res) => {
 
     try { 
         const[rows] = await pool.execute(
-            'SELECT id, name, email, password, role, status, genre, created_at FROM users WHERE email = ?',
+            'SELECT id, name, email, password, role, status, genre, created_at FROM users WHERE email = ? AND deleted = 0',
             [email]
         );
         if(rows.length === 0){
