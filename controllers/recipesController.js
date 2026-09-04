@@ -6,11 +6,13 @@ const { cleanURL } = require('../lib/utils');
 const addRecipe = async (req, res) => {
     const { trainer_id, title, ingredients, instructions, image_url, is_public = 1 } = req.body;
     var imageURL = '';
-    if (!trainer_id || !title || !ingredients || !instructions || !image_url) {
+    if (!trainer_id || !title || !ingredients || !instructions) {
         return res.status(400).json({ message: "Faltan campos necesarios para el registro." });
     }
     if(image_url){
         imageURL = cleanURL(image_url);
+    }else{
+        imageURL = '';
     }
     try {
         const [result] = await pool.execute("INSERT INTO recipes (trainer_id, title, ingredients, instructions, image_url, is_public) VALUES (?,?,?,?,?,?)",[trainer_id, title, ingredients, instructions, imageURL, is_public]);

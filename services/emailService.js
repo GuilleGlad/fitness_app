@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Correo verificado en tu cuenta de Resend (o dominio propio verificado).
 // En modo de prueba (sin dominio verificado) Resend solo te deja mandar
 // al correo con el que te registraste; para producción verifica tu dominio.
-const FROM_EMAIL = process.env.EMAIL_FROM || 'EliteFit <onboarding@resend.dev>';
+const FROM_EMAIL = process.env.EMAIL_FROM;
 
 /**
  * Envío genérico de un correo. Cualquier otro flujo (bienvenida,
@@ -67,14 +67,14 @@ const sendNotificationEmail = async (notification) => {
             <p style="color: #334155; font-size: 15px; line-height: 1.5;">${notification.message}</p>
             <a href=${notification.navigate_to}>Ir al sitio</a>
             <p style="margin-top: 24px; font-size: 12px; color: #94a3b8;">
-                Este es un correo automático de EliteFit, no respondas a este mensaje.
+                Este es un correo automático, no respondas a este mensaje.
             </p>
         </div>
     `;
 
     return sendEmail({
         to: toEmail,
-        subject: 'Nueva notificación en EliteFit',
+        subject: 'Nueva notificación en la plataforma',
         html,
     });
 };
