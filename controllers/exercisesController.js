@@ -94,12 +94,12 @@ const getExercises = async(req,res) => {
     const {trainerId} = req.params;
     try{
         if(trainerId){
-            const [rows] = await pool.execute("SELECT * FROM exercises WHERE trainer_id = ?", [trainerId]);
+            const [rows] = await pool.execute("SELECT * FROM exercises WHERE trainer_id = ? AND exercise_status = 1", [trainerId]);
             return res.status(200).json({
                 exercises: rows,
             })
         }else{
-            const [rows] = await pool.execute("SELECT exercises.*, users.name as username FROM exercises INNER JOIN users ON trainer_id = users.id");
+            const [rows] = await pool.execute("SELECT exercises.*, users.name as username FROM exercises INNER JOIN users ON trainer_id = users.id WHERE exercise_status = 1");
             return res.status(200).json({
                 exercises: rows,
             })
@@ -130,7 +130,7 @@ const listPublicExercises = async(req,res) => {
 const deleteExercise = async(req,res) => {
     const {id} = req.params;
     try{
-        await pool.execute("DELETE FROM exercises WHERE id = ?", [id]);
+        await pool.execute("UPDATE exercises SET exercise_status  = 0 WHERE id = ?", [id]);
         return res.status(200).json({
             message: "Ejercicio eliminado correctamente",
         });

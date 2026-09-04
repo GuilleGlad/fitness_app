@@ -40,7 +40,7 @@ const registerUser = async (req, res) => {
         );
 
         const payload = {
-            message: `El cliente con nombre ${name}, acaba de registrarse en la plataforma.`,
+            message: `Un usuario con nombre ${name}, acaba de registrarse en la plataforma.`,
             destination_id: 1,
             source_id: userId,
             status: 0,
@@ -75,7 +75,7 @@ const loginUser = async (req, res) => {
     const {email, password} = req.body;
 
     try { 
-        const[rows_inactive] = await pool.execute("SELECT id, name, email, password, role, status, genre, created_at FROM users WHERE email = ? AND (role = 'trainer' AND status = 0 OR role = 'client' AND deleted = 0)", [email]);
+        const[rows_inactive] = await pool.execute("SELECT id, name, email, password, role, status, genre, created_at FROM users WHERE email = ? AND ((role = 'trainer' AND status = 0) OR (role = 'client' AND deleted = 1))", [email]);
         if(rows_inactive.length > 0 && rows_inactive[0].status === 0){
             return res.status(200).json({inactivo: true, message: "Usuario Inactivo, por favor contacte con el administrador."});
         }
