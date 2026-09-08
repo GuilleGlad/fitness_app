@@ -269,6 +269,49 @@ const purgeDeletedUsers = async(req, res) => {
     }
 }
 
+const updatePicture = async (req, res) => {
+    try {
+        const userId = req.user.id; // Or req.params.id depending on your workflow
+
+        if (!req.file) {
+            return res.status(400).json({ message: "No se ha proporcionado ninguna imagen" });
+        }
+
+        const picturePath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
+        await pool.execute("UPDATE users SET picture = ? WHERE id = ?", [picturePath, userId]);
+
+        return res.status(200).json({
+            message: "Foto de perfil actualizada exitosamente",
+            picture: picturePath
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error al guardar la imagen",
+            error: error.message
+        });
+    }
+};
+
+const deletePicture = async (req, res) => {
+    try {
+        const userId = req.user.id; // Or req.params.id depending on your workflow
+
+        await pool.execute("UPDATE users SET picture = NULL WHERE id = ?", [userId]);
+
+        return res.status(200).json({
+            message: "Foto de perfil eliminada exitosamente",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error al eliminar la imagen",
+            error: error.message
+        });
+    }
+};
+
+
+// Add updatePicture to module.exports
 
 module.exports = {
     getUsers,
@@ -282,5 +325,7 @@ module.exports = {
     updateUser,
     restoreUser,
     purgeDeletedUsers,
-    getCountsByTrainer
+    getCountsByTrainer,
+    updatePicture,
+    deletePicture
 }

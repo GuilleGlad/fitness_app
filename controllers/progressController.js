@@ -124,9 +124,10 @@ const getProfile = async (req, res) =>{
             }
         })
         const token_json = jwt.decode(token, process.env.TOKEN_SECRET);
+        console.log(token_json);
         const client_id = token_json.id;
         const role = token_json.role;
-        [rows] = await pool.execute("SELECT *, trainers.name as trainer_name, trainers.phone as trainer_phone FROM client_profiles INNER JOIN users trainers ON client_profiles.trainer_id = trainers.id WHERE user_id = ? LIMIT 1",[client_id]);
+        [rows] = await pool.execute("SELECT clients.id AS id, clients.name AS name, clients.email AS email, clients.phone AS phone, clients.picture AS picture, clients.genre AS genre, clients.role AS role, clients.status AS status, clients.password AS password, clients.deleted AS deleted, clients.created_at AS created_at, client_profiles.user_id AS user_id, client_profiles.trainer_id AS trainer_id, client_profiles.age AS age,client_profiles.height AS height, client_profiles.initial_weight AS initial_weight, client_profiles.goal AS goal, client_profiles.training_days AS training_days, client_profiles.payment_day AS payment_day, client_profiles.log_date AS log_date, client_profiles.whatsapp_url AS whatsapp_url, trainers.picture AS trainer_picture, trainers.role AS trainer_role FROM users as clients INNER JOIN client_profiles ON client_profiles.user_id = clients.id INNER JOIN users trainers ON client_profiles.trainer_id = trainers.id WHERE clients.id = ? LIMIT 1",[client_id]);
         return res.status(200).json({
             message: "Perfil del Cliente",
             profile: rows,
@@ -157,10 +158,27 @@ const getProfileById = async (req, res) =>{
     }
 }
 
+const getTrainerById = async (req, res) => {
+    try{
+        const {trainerId} = req.params;
+        [rows] = await pool.execute("SELECT * FROM users WHERE id = ? AND role = 'trainer'",[trainerId]);
+        return res.status(200).json({
+            message: "Perfil del Entrenador",
+            trainer: rows,
+        });
+    }catch(error){
+        res.status(500).json({
+            message: "Error",
+            error: error.message
+        })
+    }
+}
+
 module.exports = {
     addProgress,
     listProgress,
     getProgress,
     getProfile,
-    getProfileById
+    getProfileById,
+    getTrainerById
 }

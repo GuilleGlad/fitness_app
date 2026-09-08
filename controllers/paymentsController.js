@@ -308,7 +308,8 @@ const updatePayment = async (req, res) => {
 
 const updatePaymentStatus = async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    // Agregamos update_payment_day como parámetro opcional en req.body
+    const { status, update_payment_day } = req.body;
     const io = req.app.get('io');
     const fullUrl = req.get('origin');
 
@@ -328,8 +329,10 @@ const updatePaymentStatus = async (req, res) => {
     }
 
     try {
+        // 1. Obtener el pago junto con el client_id, la fecha del pago y el payment_day actual del perfil
         const [paymentRows] = await pool.execute(`
-            SELECT p.id, DATE_FORMAT(p.payment_date, '%Y-%m-%d') as payment_date_value, cp.payment_day
+            SELECT p.id, p.client_id, DAY(p.payment_date) as payment_day_from_date,
+                   DATE_FORMAT(p.payment_date, '%Y-%m-%d') as payment_date_value, cp.payment_day
             FROM payments p
             LEFT JOIN client_profiles cp ON cp.user_id = p.client_id
             WHERE p.id = ?
@@ -340,17 +343,26 @@ const updatePaymentStatus = async (req, res) => {
         }
 
         const paymentRow = paymentRows[0];
-        const paymentDay = Number(paymentRow.payment_day);
+        let paymentDay = Number(paymentRow.payment_day);
 
+        // 2. 🔥 Si el entrenador indicó que se debe actualizar el paymentDay con este pago:
+        if (update_payment_day === true || update_payment_day === 'true') {
+            const newPaymentDay = Number(paymentRow.payment_day_from_date);
+
+            if (Number.isInteger(newPaymentDay) && newPaymentDay >= 1 && newPaymentDay <= 31) {
+                // Actualizar el perfil del cliente en la BD
+                await pool.execute(
+                    'UPDATE client_profiles SET payment_day = ? WHERE user_id = ?',
+                    [newPaymentDay, paymentRow.client_id]
+                );
+                // Usar este nuevo día para el cálculo de expiración
+                paymentDay = newPaymentDay;
+            }
+        }
+
+        // 3. Cálculo de la fecha de vencimiento ( expiration_date )
         let expirationDate = null;
         if (Number.isInteger(paymentDay) && paymentDay >= 1 && paymentDay <= 31) {
-            // Misma lógica de ciclo usada en checkPaymentExpiration: anclada a
-            // payment_date, no a "hoy", para que un pago hecho después del
-            // día de corte cubra el ciclo siguiente y no el que ya pasó.
-            // Se usa payment_date_value ('YYYY-MM-DD', vía DATE_FORMAT en SQL)
-            // en vez de `new Date(payment_date)` para evitar que un DATETIME
-            // cercano a medianoche cambie de día calendario al reinterpretarse
-            // con la zona horaria del proceso Node.
             const getCyclePaymentDate = (year, month) => {
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
                 return new Date(year, month, Math.min(paymentDay, daysInMonth));
@@ -363,6 +375,7 @@ const updatePaymentStatus = async (req, res) => {
             expirationDate = paymentDate >= currentCycleDate ? nextCycleDate : currentCycleDate;
         }
 
+        // 4. Actualizar el pago en la BD
         const [result] = await pool.execute(
             'UPDATE payments SET status = ?, status_date = NOW(), expiration_date = ? WHERE id = ?',
             [status, expirationDate, id]
@@ -373,7 +386,7 @@ const updatePaymentStatus = async (req, res) => {
             return res.status(404).json({ message: "No se encontró el pago con el ID proporcionado." });
         }
 
-        // Obtener el pago actualizado
+        // 5. Obtener los datos del pago actualizado para respuesta y notificaciones
         const [rows] = await pool.execute(`
             SELECT p.*, u.id as client_id, u.name as client_name, u.email as client_email, t.name as trainer_name, t.email as trainer_email
             FROM payments p
@@ -382,13 +395,13 @@ const updatePaymentStatus = async (req, res) => {
             WHERE p.id = ?
         `, [id]);
 
-        payload = {
+        const payload = {
             message: `Hola ${rows[0].client_name}, su pago ha sido ${status}.`,
             destination_id: rows[0].client_id,
             source_id: rows[0].trainer_email,
             status: 0,
             navigate_to: fullUrl + '/login'
-        }
+        };
         const data_notification = await notificationService.createNotification(payload);
         if (io) io.emit('new_notification', data_notification);
 
@@ -397,7 +410,8 @@ const updatePaymentStatus = async (req, res) => {
         });
 
         return res.status(200).json({
-            message: `Estado del pago actualizado a ${status}`,
+            message: `Estado del pago actualizado a ${status}` + (update_payment_day ? " y se actualizó el día de pago del cliente." : "."),
+            updated_payment_day: paymentDay,
             data: rows[0]
         });
     } catch (error) {
@@ -688,6 +702,46 @@ const checkPaymentDay = async (req, res) => {
     }
 };
 
+
+const getClientPaymentDay = async (req, res) => {
+    const clientId = Number.parseInt(req.params.client_id, 10);
+
+    if (Number.isNaN(clientId) || clientId <= 0) {
+        return res.status(400).json({ message: "El client_id debe ser un ID válido." });
+    }
+
+    try {
+        const [profileRows] = await pool.execute(
+            'SELECT user_id, payment_day FROM client_profiles WHERE user_id = ? LIMIT 1',
+            [clientId]
+        );
+
+        if (profileRows.length === 0) {
+            return res.status(404).json({ message: "Perfil del cliente no encontrado." });
+        }
+
+        const paymentDay = Number(profileRows[0].payment_day);
+
+        if (!Number.isInteger(paymentDay) || paymentDay < 1 || paymentDay > 31) {
+            return res.status(404).json({
+                message: "El cliente aún no tiene un día de pago configurado."
+            });
+        }
+
+        return res.status(200).json({
+            message: "Día de pago obtenido correctamente",
+            data: {
+                client_id: clientId,
+                payment_day: paymentDay
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message
+        });
+    }
+};
+
 module.exports = {
     listPayments,
     getPayment,
@@ -697,5 +751,6 @@ module.exports = {
     deletePayment,
     getPaymentsByClient,
     checkPaymentExpiration,
-    checkPaymentDay
+    checkPaymentDay,
+    getClientPaymentDay
 };

@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
-const { getUsers, getUser, setSettings, getSettings, getCounts, getClients, getTrainers, deleteUser, updateUser, restoreUser, purgeDeletedUsers, getCountsByTrainer} = require('../../controllers/adminController');
+const upload = require('../../middlewares/uploadMiddleware');
+const { getUsers, getUser, setSettings, getSettings, getCounts, getClients, getTrainers, deleteUser, updateUser, restoreUser, purgeDeletedUsers, getCountsByTrainer, updatePicture, deletePicture} = require('../../controllers/adminController');
 
 // Endpoints
 //AUTH - /admin
@@ -19,6 +20,8 @@ router.get('/counts', authenticateMiddleware, authorizeMiddleware('admin'), getC
 router.get('/counts-by-trainer/:trainer_id', authenticateMiddleware, getCountsByTrainer);
 router.get('/clients', authenticateMiddleware, authorizeMiddleware('admin','trainer','client'), getClients);
 router.get('/trainers', authenticateMiddleware, getTrainers);
+router.post('/users/update-picture', authenticateMiddleware, upload.single('picture'), updatePicture);
+router.delete('/users/delete-picture', authenticateMiddleware, deletePicture);
 
 module.exports = router;
 

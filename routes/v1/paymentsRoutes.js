@@ -14,7 +14,8 @@ const {
     deletePayment, 
     getPaymentsByClient,
     checkPaymentExpiration,
-    checkPaymentDay
+    checkPaymentDay,
+    getClientPaymentDay
 } = require('../../controllers/paymentsController');
 
 const uploadDir = path.join(__dirname, '../../uploads');
@@ -58,5 +59,7 @@ router.delete('/:id', authenticateMiddleware, authorizeMiddleware('trainer', 'ad
 
 // Verificar expiración de un pago (trainer, admin, client)
 router.get('/:id/check-expiration', authenticateMiddleware, authorizeMiddleware('trainer', 'admin', 'client'), checkPaymentExpiration);
+
+router.get('/client/:client_id/payment-day', authenticateMiddleware, authorizeMiddleware('trainer', 'admin', 'client'), getClientPaymentDay);
 
 module.exports = router;
