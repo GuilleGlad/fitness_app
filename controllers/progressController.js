@@ -4,6 +4,7 @@ const pool = require('../config/db');
 
 const addProgress = async (req, res) => {
     const { client_id, height, weight, waist, hips, arms, legs, age, training_days, goal, trainerId  } = req.body;
+    const { masa_corporal, grasa_corporal, masa_muscular, metabolismo_basal, edad_corporal, grasa_visceral } = req.body;
     const io = req.app.get("io");
     const fullUrl = req.get("origin");
     const emailService = require("../services/emailService");
@@ -25,7 +26,7 @@ const addProgress = async (req, res) => {
             ? `${req.protocol}://${req.get('host')}/uploads/${photoBackFile.filename}`
             : '';
 
-        const [result] = await pool.execute("INSERT INTO progress_history (client_id, weight, waist, hips, arms, legs, photo_front_url, photo_back_url) VALUES (?,?,?,?,?,?,?,?)",[client_id, weight, waist, hips, arms, legs, photo_front, photo_back]);
+        const [result] = await pool.execute("INSERT INTO progress_history (client_id, weight, waist, hips, arms, legs, photo_front_url, photo_back_url,masa_corporal, grasa_corporal, masa_muscular, metabolismo_basal, edad_corporal, grasa_visceral) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",[client_id, weight, waist, hips, arms, legs, photo_front, photo_back, masa_corporal, grasa_corporal, masa_muscular, metabolismo_basal, edad_corporal, grasa_visceral]);
         const insert_id = result.insertId;
 
         const [rows] = await pool.execute("SELECT * FROM client_profiles WHERE user_id = ? AND trainer_id = ?",[client_id, trainerId]);
