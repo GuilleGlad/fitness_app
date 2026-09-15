@@ -9,7 +9,7 @@ const listByTrainer = async (req, res) => {
         return res.status(400).json({ message: "ID del entrenador es necesario." });
     }
     try {
-        const [rows] = await pool.execute("SELECT workout_items.id as workout_id, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, exercises.trainer_id, exercises.title, exercises.description, exercises.photo_url, exercises.video_url, exercises.publico FROM workout_items INNER JOIN exercises ON workout_items.exercise_id = exercises.id WHERE trainer_id = ?", [trainer_id]);
+        const [rows] = await pool.execute("SELECT workout_items.id as workout_id, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, workout_items.time, workout_items.sets_or_time, exercises.trainer_id, exercises.title, exercises.description, exercises.photo_url, exercises.video_url, exercises.publico FROM workout_items INNER JOIN exercises ON workout_items.exercise_id = exercises.id WHERE trainer_id = ?", [trainer_id]);
         return res.status(200).json({
             message: "Listado de Entrenamientos",
             filas: rows,
@@ -22,12 +22,25 @@ const listByTrainer = async (req, res) => {
 }
 
 const addWorkout = async (req, res) => {
-    const { exercise_id, sets, reps, client_effort_notes } = req.body;
-    if (!exercise_id || !sets || !reps) {
+    const { exercise_id, sets, reps, client_effort_notes, time, sets_or_time } = req.body;
+    let curr_sets, curr_reps, curr_time, curr_sets_or_time;
+    if (!exercise_id) {
         return res.status(400).json({ message: "Faltan campos requeridos." });
     }
+    console.log(sets_or_time);
+    if(sets_or_time){
+        curr_sets = null;
+        curr_reps = null;
+        curr_time = time;
+        curr_sets_or_time = 1;
+    }else{
+        curr_time = null;
+        curr_sets = sets;
+        curr_reps = reps;
+        curr_sets_or_time = 0;
+    }    
     try {
-        const [result] = await pool.execute("INSERT INTO workout_items (exercise_id, sets, reps_text, client_effort_notes) VALUES (?,?,?,?)", [exercise_id, sets, reps, client_effort_notes]);
+        const [result] = await pool.execute("INSERT INTO workout_items (exercise_id, sets, reps_text, client_effort_notes,time, sets_or_time) VALUES (?,?,?,?,?,?)", [exercise_id, sets, reps, client_effort_notes,curr_time, curr_sets_or_time]);
         const insert_id = result.insertId;
         return res.status(201).json({
             message: "Registro Creado",
