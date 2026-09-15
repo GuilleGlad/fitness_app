@@ -73,7 +73,34 @@ const deleteWorkout = async (req, res) => {
             message: "Error: " + error.message,
         });
     }
-}
+};
+
+const deleteWorkoutsBatch = async (req, res) => {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Se requiere un array de IDs no vacío." });
+    }
+    
+    try {
+        // Create placeholders for IN clause
+        const placeholders = ids.map(() => '?').join(',');
+        const query = `DELETE FROM workout_items WHERE id IN (${placeholders})`;
+        
+        const [result] = await pool.execute(query, ids);
+        const affectedRows = result.affectedRows;
+        
+        return res.status(200).json({
+            message: "Registros Eliminados",
+            affectedRows: affectedRows,
+            deletedCount: affectedRows
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message,
+        });
+    }
+};
 
 const updateWorkout = async (req, res) => {
     const { id } = req.params;
@@ -345,6 +372,7 @@ module.exports = {
     listByTrainer,
     addWorkout,
     deleteWorkout,
+    deleteWorkoutsBatch,
     updateWorkout,
     addNoteToWorkout,
     getWorkoutNote,
