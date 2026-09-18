@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
+const tokenExpiration = '24h';
+
 const registerUser = async (req, res) => {
     const io = req.app.get("io");
     const notificationService = require('../services/notificationsService');
@@ -36,7 +38,7 @@ const registerUser = async (req, res) => {
                 status: defaultStatus
             },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: tokenExpiration }
         );
 
         const payload = {
@@ -106,7 +108,7 @@ const loginUser = async (req, res) => {
                 status: user.status,
             },
             process.env.JWT_SECRET,
-            {expiresIn: '1h'}
+            { expiresIn: tokenExpiration }
         );
 
         res.status(201).json(
@@ -148,7 +150,7 @@ const refreshToken = async (req, res) => {
                 status,
             },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: tokenExpiration }
         );
 
         return res.status(200).json({
@@ -241,7 +243,7 @@ const mePut = async(req, res) => {
                 role: role,                 
             },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: tokenExpiration }
         );
 
         res.status(201).json({
