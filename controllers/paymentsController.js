@@ -531,6 +531,95 @@ const checkPaymentExpiration = async (req, res) => {
             message: "Error: " + error.message
         });
     }
+
+};
+
+const checkPaymentDay = async (req, res) => {
+    const clientId = Number.parseInt(req.params.client_id, 10);
+
+    if (Number.isNaN(clientId) || clientId <= 0) {
+        return res.status(400).json({ message: "El client_id debe ser un ID válido." });
+    }
+
+    try {
+        const [profileRows] = await pool.execute(
+            'SELECT payment_day FROM client_profiles WHERE user_id = ? LIMIT 1',
+            [clientId]
+        );
+
+        if (profileRows.length === 0) {
+            return res.status(404).json({ message: "Perfil del cliente no encontrado." });
+        }
+
+        const paymentDay = Number(profileRows[0].payment_day);
+        if (!Number.isInteger(paymentDay) || paymentDay < 1 || paymentDay > 31) {
+            return res.status(400).json({
+                message: "El cliente no tiene un día de pago configurado."
+            });
+        }
+
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const getPaymentDate = (year, month) => new Date(
+            year,
+            month,
+            Math.min(paymentDay, new Date(year, month + 1, 0).getDate())
+        );
+        const currentPaymentDate = getPaymentDate(today.getFullYear(), today.getMonth());
+        const nextPaymentDate = getPaymentDate(today.getFullYear(), today.getMonth() + 1);
+        const previousPaymentDate = getPaymentDate(today.getFullYear(), today.getMonth() - 1);
+        const cycleStart = startOfDay >= currentPaymentDate ? currentPaymentDate : previousPaymentDate;
+        const cycleEnd = startOfDay >= currentPaymentDate ? nextPaymentDate : currentPaymentDate;
+        const toSqlDate = (date) => date.toISOString().slice(0, 10);
+
+        const [paymentRows] = await pool.execute(`
+            SELECT *
+            FROM payments
+            WHERE client_id = ?
+              AND status IN ('Pendiente', 'Aprobado')
+              AND payment_date >= ?
+              AND payment_date < ?
+            ORDER BY payment_date DESC
+            LIMIT 1
+        `, [clientId, toSqlDate(cycleStart), toSqlDate(cycleEnd)]);
+
+        const paymentExists = paymentRows.length > 0;
+        const dueDate = paymentExists && startOfDay >= currentPaymentDate
+            ? nextPaymentDate
+            : currentPaymentDate;
+        const daysRemaining = Math.ceil((dueDate - startOfDay) / 86400000);
+
+        if (!paymentExists && startOfDay > currentPaymentDate) {
+            return res.status(200).json({
+                message: "Su pago mensual está vencido",
+                payment_day: paymentDay,
+                days_remaining: 0,
+                payment_exists: false
+            });
+        }
+
+        if (daysRemaining === 0) {
+            return res.status(200).json({
+                message: "Hoy es el día de Pago mensual",
+                payment_day: paymentDay,
+                days_remaining: 0,
+                payment_exists: paymentExists,
+                data: paymentRows[0] || null
+            });
+        }
+
+        return res.status(200).json({
+            message: `Faltan ${daysRemaining} días para el día de Pago de mensualidad`,
+            payment_day: paymentDay,
+            days_remaining: daysRemaining,
+            payment_exists: paymentExists,
+            data: paymentRows[0] || null
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message
+        });
+    }
 };
 
 module.exports = {
@@ -541,5 +630,6 @@ module.exports = {
     updatePaymentStatus,
     deletePayment,
     getPaymentsByClient,
-    checkPaymentExpiration
+    checkPaymentExpiration,
+    checkPaymentDay
 };

@@ -13,7 +13,8 @@ const {
     updatePaymentStatus, 
     deletePayment, 
     getPaymentsByClient,
-    checkPaymentExpiration
+    checkPaymentExpiration,
+    checkPaymentDay
 } = require('../../controllers/paymentsController');
 
 const uploadDir = path.join(__dirname, '../../uploads');
@@ -36,6 +37,9 @@ router.get('/', authenticateMiddleware, authorizeMiddleware('trainer', 'admin', 
 
 // Obtener pagos de un cliente específico
 router.get('/client/:client_id', authenticateMiddleware, authorizeMiddleware('trainer', 'admin', 'client'), getPaymentsByClient);
+
+// Verificar el día de pago de un cliente
+router.get('/client/:client_id/check-payment-day', authenticateMiddleware, authorizeMiddleware('trainer', 'admin', 'client'), checkPaymentDay);
 
 // Obtener un pago por ID
 router.get('/:id', authenticateMiddleware, authorizeMiddleware('trainer', 'admin', 'client'), getPayment);
