@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateMiddleware = require('../../middlewares/authMiddleware');
 const authorizeMiddleware = require('../../middlewares/roleMiddleware');
-const { listByClient, assignWorkout, deassignWorkout, deassignWorkoutsBatch, updateDailyWorkout, listByTrainer, deleteWorkout, addWorkout, updateWorkout, addNoteToWorkout, getWorkoutNote, getWorkoutNoteById, updateNoteFeedback, listByClientPast,deleteWorkoutsBatch} = require('../../controllers/workoutsController');
+const { listByClient, assignWorkout, deassignWorkout, deassignWorkoutsBatch, updateDailyWorkout, listByTrainer, deleteWorkout, addWorkout, updateWorkout, addNoteToWorkout, getWorkoutNote, getWorkoutNoteById, updateNoteFeedback, listByClientPast,deleteWorkoutsBatch, deactivateDailyWorkout} = require('../../controllers/workoutsController');
 
 
 //WORKOUTS - /workouts
@@ -23,5 +23,5 @@ router.get('/get-note', authenticateMiddleware, authorizeMiddleware('trainer','a
 router.get('/get-note-by-id/:id', authenticateMiddleware, authorizeMiddleware('trainer','admin', 'client'), getWorkoutNoteById);
 router.put('/update-feedback/:id', authenticateMiddleware, authorizeMiddleware('trainer','admin', 'client'), updateNoteFeedback);
 
-
+router.delete('/deactivate',authenticateMiddleware, authorizeMiddleware('admin', 'trainer'), deactivateDailyWorkout);
 module.exports = router;

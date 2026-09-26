@@ -132,7 +132,7 @@ const listByClient = async (req, res) => {
     }
     try {
         // const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, users.id AS user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title, workout_note.id as workout_note_id, workout_note.note, workout_note.feedback, workout_note.status FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id LEFT JOIN workout_note ON workout_note.client_id = daily_workouts.client_id AND workout_note.daily_workouts_id = daily_workouts.id AND DATE(workout_note.log_date) = DATE(daily_workouts.log_date) WHERE daily_workouts.client_id = ? AND daily_workouts.status = 1 ORDER BY daily_workouts.id ASC", [client_id]);
-        const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, workout_items.sets_or_time, workout_items.time, users.id AS user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title, workout_note.id as workout_note_id, workout_note.note, workout_note.feedback, workout_note.status, workout_note.log_date as workout_note_log_date FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id LEFT JOIN workout_note ON workout_note.client_id = daily_workouts.client_id AND workout_note.daily_workouts_id = daily_workouts.id WHERE daily_workouts.client_id = ? ORDER BY daily_workouts.id ASC", [client_id]);        
+        const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, daily_workouts.active, daily_workouts.close_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, workout_items.sets_or_time, workout_items.time, users.id AS user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title, workout_note.id as workout_note_id, workout_note.note, workout_note.feedback, workout_note.status, workout_note.log_date as workout_note_log_date FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id LEFT JOIN workout_note ON workout_note.client_id = daily_workouts.client_id AND workout_note.daily_workouts_id = daily_workouts.id WHERE daily_workouts.client_id = ? ORDER BY daily_workouts.id ASC", [client_id]);        
         return res.status(200).json({
             message: "Lista de Entrenamientos",
             filas: rows
@@ -151,7 +151,7 @@ const listByClientPast = async (req, res) => {
     }
     try {
         // const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, users.id AS user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title, workout_note.id as workout_note_id, workout_note.note, workout_note.feedback, workout_note.status FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id LEFT JOIN workout_note ON workout_note.client_id = daily_workouts.client_id AND workout_note.daily_workouts_id = daily_workouts.id AND DATE(workout_note.log_date) = DATE(daily_workouts.log_date) WHERE daily_workouts.client_id = ? AND daily_workouts.status = 1 ORDER BY daily_workouts.id ASC", [client_id]);
-        const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, workout_items.sets_or_time, workout_items.time, users.id AS user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title, workout_note.id AS workout_note_id, workout_note.note, workout_note.feedback, workout_note.status, workout_note.log_date as workout_note_log_date, progress_history.weight, progress_history.waist, progress_history.legs, progress_history.arms, progress_history.hips, progress_history.photo_front_url, progress_history.photo_back_url, progress_history.trainer_notes as progress_history_trainer_notes FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id LEFT JOIN workout_note ON workout_note.client_id = daily_workouts.client_id AND workout_note.daily_workouts_id = daily_workouts.id LEFT JOIN progress_history ON daily_workouts.progress_history_id = progress_history.id WHERE daily_workouts.client_id = ? AND (daily_workouts.status = 0 OR workout_note.note IS NOT NULL) ORDER BY daily_workouts.id ASC", [client_id]);
+        const [rows] = await pool.execute("SELECT daily_workouts.id, daily_workouts.client_id, daily_workouts.workout_id, daily_workouts.day_of_week, daily_workouts.trainer_notes, daily_workouts.log_date, daily_workouts.active, daily_workouts.close_date, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, workout_items.sets_or_time, workout_items.time, users.id AS user_id, users.name, users.email, users.role, users.created_at, users.status, users.genre, users.phone, users.picture, users.deleted, exercises.title, workout_note.id AS workout_note_id, workout_note.note, workout_note.feedback, workout_note.status, workout_note.log_date as workout_note_log_date, progress_history.weight, progress_history.waist, progress_history.legs, progress_history.arms, progress_history.hips, progress_history.photo_front_url, progress_history.photo_back_url, progress_history.trainer_notes as progress_history_trainer_notes FROM daily_workouts INNER JOIN workout_items ON daily_workouts.workout_id = workout_items.id INNER JOIN users ON daily_workouts.client_id = users.id INNER JOIN exercises ON exercises.id = workout_items.exercise_id LEFT JOIN workout_note ON workout_note.client_id = daily_workouts.client_id AND workout_note.daily_workouts_id = daily_workouts.id LEFT JOIN progress_history ON daily_workouts.progress_history_id = progress_history.id WHERE daily_workouts.client_id = ? AND (daily_workouts.status = 0 OR workout_note.note IS NOT NULL) ORDER BY daily_workouts.id ASC", [client_id]);
         return res.status(200).json({
             message: "Lista de Entrenamientos",
             filas: rows
@@ -392,6 +392,32 @@ const updateNoteFeedback = async (req, res) => {
         });
     }
 };
+
+const deactivateDailyWorkout = async (req, res) => {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Se requiere un array de IDs no vacío." });
+    }
+
+    try {
+        const placeholders = ids.map(() => '?').join(',');
+        const query = `UPDATE daily_workouts SET active = 0, close_date = CURRENT_TIMESTAMP() WHERE id IN (${placeholders})`;
+
+        const [result] = await pool.execute(query, ids);
+
+        return res.status(200).json({
+            message: "Registros Desactivados",
+            affectedRows: result.affectedRows,
+            deassignedCount: result.affectedRows
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error: " + error.message,
+        });
+    }
+
+}
 module.exports = {
     listByClient,
     listByClientPast,
@@ -407,5 +433,6 @@ module.exports = {
     addNoteToWorkout,
     getWorkoutNote,
     getWorkoutNoteById,
-    updateNoteFeedback
+    updateNoteFeedback,
+    deactivateDailyWorkout
 }
