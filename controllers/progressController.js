@@ -4,7 +4,7 @@ const pool = require('../config/db');
 
 const addProgress = async (req, res) => {
     const { client_id, height, weight, waist, hips, arms, legs, age, training_days, goal, trainerId  } = req.body;
-    const { masa_corporal, grasa_corporal, masa_muscular, metabolismo_basal, edad_corporal, grasa_visceral } = req.body;
+    const { masa_corporal = null, grasa_corporal = null, masa_muscular = null, metabolismo_basal = null, edad_corporal = null, grasa_visceral = null } = req.body;
     const io = req.app.get("io");
     const fullUrl = req.get("origin");
     const emailService = require("../services/emailService");
