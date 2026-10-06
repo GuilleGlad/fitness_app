@@ -9,7 +9,7 @@ const listByTrainer = async (req, res) => {
         return res.status(400).json({ message: "ID del entrenador es necesario." });
     }
     try {
-        const [rows] = await pool.execute("SELECT workout_items.id as workout_id, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, workout_items.time, workout_items.sets_or_time, exercises.trainer_id, exercises.title, exercises.description, exercises.photo_url, exercises.video_url, exercises.publico FROM workout_items INNER JOIN exercises ON workout_items.exercise_id = exercises.id WHERE trainer_id = ?", [trainer_id]);
+        const [rows] = await pool.execute("SELECT workout_items.id as workout_id, workout_items.exercise_id, workout_items.sets, workout_items.reps_text, workout_items.client_effort_notes, workout_items.time, workout_items.sets_or_time, exercises.trainer_id, exercises.title, exercises.description, exercises.photo_url, exercises.video_url, exercises.publico FROM workout_items INNER JOIN exercises ON workout_items.exercise_id = exercises.id AND exercise_status = 1 WHERE trainer_id = ?", [trainer_id]);
         return res.status(200).json({
             message: "Listado de Entrenamientos",
             filas: rows,
