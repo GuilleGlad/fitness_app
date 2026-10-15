@@ -68,7 +68,7 @@ app.get('/api/testApi', (req, res) => {
         code:200
     })
 })
-
+ 
 // =================================================================
 // ⚡ SOCKET.IO
 // =================================================================
@@ -76,7 +76,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors:{
-        origin: "*",
+        origin: "https://guillegladstudios.com",
         methods: ["GET","POST"]
     }
 });
