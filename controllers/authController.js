@@ -10,8 +10,8 @@ const registerUser = async (req, res) => {
     const emailService = require('../services/emailService');
     const fullUrl = req.get('origin'); 
     var defaultStatus = 0;
-    const { name, email, password, role, genre, phone} = req.body;
-    if (!name || !email || !password || !role || !genre) {
+    const { name, email, password, role = 'client', genre, phone} = req.body;
+    if (!name || !email || !password || !genre) {
         return res.status(400).json({ message: "Faltan campos que son requeridos." });
     }
     try {
