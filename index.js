@@ -1,14 +1,14 @@
+// Cargar variables de entorno (asegúrate de que sea el primer archivo)
+require('dotenv').config(); 
 // 1. Import the express module, cors and dotenv
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
+
 const path = require('path');
 
 const http = require('http');
 const {Server} = require('socket.io');
 
-// Cargar variables de entorno (asegúrate de que sea el primer archivo)
-dotenv.config();
 // 2. Initialize the express application
 const app = express();
 
@@ -76,7 +76,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors:{
-        origin: "https://guillegladstudios.com",
+        origin: "*",
         methods: ["GET","POST"]
     }
 });
