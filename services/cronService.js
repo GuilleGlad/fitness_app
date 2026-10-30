@@ -35,7 +35,7 @@ const checkMissingClientProfiles = async () => {
             <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f8fafc; border-radius: 16px;">
               <h2 style="color: #1e222b; margin-bottom: 8px;">¡Hola!</h2>
               <p style="color: #334155; font-size: 15px; line-height: 1.5;">
-                Tu cuenta está registrada en EliteFit, pero aún no has completado tu perfil de cliente. 
+                Tu cuenta está registrada en Fitneate.com, pero aún no has completado tu perfil de cliente. 
                 Para poder ofrecerte el mejor servicio de entrenamiento personalizado, necesitamos que completes 
                 los siguientes datos:
               </p>
@@ -45,7 +45,7 @@ const checkMissingClientProfiles = async () => {
                 <li>Fotos recientes tuyo</li>
               </ul>
               <p style="margin-top: 24px; font-size: 12px; color: #94a3b8;">
-                Este es un correo automático de EliteFit, no respondas a este mensaje.
+                Este es un correo automático de Fitneate.com, no respondas a este mensaje.
               </p>
             </div>
           `
